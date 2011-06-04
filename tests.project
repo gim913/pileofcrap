@@ -81,5 +81,7 @@
       <ResourceCompiler Options=""/>
     </GlobalSettings>
   </Settings>
-  <VirtualDirectory Name="Search"/>
+  <VirtualDirectory Name="Search">
+    <File Name="search/Search.h"/>
+  </VirtualDirectory>
 </CodeLite_Project>
