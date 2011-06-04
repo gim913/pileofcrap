@@ -9,6 +9,20 @@
 
 #include "../types.h"
 
+#include <algorithm>
+
+template <class U> struct UnConst {
+	typedef U Result;
+};
+template <class U> struct UnConst<const U> {
+	typedef U Result;
+};
+
+template <class U> struct UnConst<const U&> {
+	typedef U& Result;
+};
+
+
 /*
  * The goal is to have at least three things here
  * - simple pattern search (BM)
@@ -30,9 +44,12 @@ namespace Search {
 	class Pattern {
 	public:
 		static const char Template_Arg_Limit[sizeof(Ch) > 2 ? -1 : 0];
+		static const size_t badCharLen = 1 << (sizeof(Ch)*8);
+		//typedef typename UnConst<Ch>::Result Rch;
 		typedef POD::TBuffer<Ch> Buf;
 		
-		Pattern(const Buf& pattern) : pattern(pattern), badChar(0), goodShift(0) {
+		Pattern(const Buf& pattern) : pattern(pattern), badChar(0) {
+			init();
 		}
 		
 		~Pattern() {
@@ -40,9 +57,23 @@ namespace Search {
 		
 		void reset(const Buf& _pattern) {
 			pattern = _pattern;
+			init();
 		}
 		
 		Buf search(const Buf& hayStack) {
+			size_t i = 0;
+			while (i <= (hayStack.len - pattern.len)) {
+				int j;
+				for (j = static_cast<int>(pattern.len) - 1; j >= 0; j--) {
+					if (pattern.ptr[j] != hayStack.ptr[i+j]) {
+						break;
+					}
+				}
+				if (j < 0) {
+					return Buf(hayStack.ptr + i, hayStack.len - i);
+				}
+				i += std::max(1, badChar[hayStack.ptr[i+j]]+ j +1);
+			}
 			return Buf(0, 0);
 		}
 		
@@ -52,11 +83,13 @@ namespace Search {
 		
 	protected:
 		void init() {
-			if (goodShift)
-				delete [] goodShift;
+			//if (goodShift)
+			//	delete [] goodShift;
+				
 			if (!badChar)
-				badChar = new Ch[badCharLen];
+				badChar = new int[badCharLen];
 			
+			// is there sense to do that?
 			if (sizeof(Ch) == 1) {
 				memset(badChar, pattern.len, badCharLen);
 				
@@ -67,15 +100,13 @@ namespace Search {
 			}
 			
 			for (size_t i = 0; i < pattern.len; ++i) {
-				badChar[pattern.ptr[i]] = pattern.len - i - 1;
+				badChar[pattern.ptr[i]] = -i - 1;
 			}
 		}
 		
 	private:
 		Buf pattern;
-		static const size_t badCharLen = 1 << (sizeof(Ch)*8);
-		Ch* badChar;
-		Ch* goodShift;
+		int* badChar;
 	};
 	
 	
