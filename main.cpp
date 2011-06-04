@@ -14,11 +14,11 @@ namespace {
 		ASSERT_EQ(p.ptr, r.ptr);
 	}
 
-	TEST(SearchPattern, TestInit) {
+	TEST(SearchPattern, TestReset) {
 		POD::ConstBuffer a("Nupogodi", sizeof("Nupogodi")-1);
 		POD::ConstBuffer b("foobar", sizeof("foobar")-1);
 		Search::Pattern<const char> search(a);
-		search.init(b);
+		search.reset(b);
 		ASSERT_EQ(b.ptr, search.getPattern().ptr);
 	}
 	

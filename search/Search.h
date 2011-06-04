@@ -21,16 +21,24 @@ namespace Search {
 	
 	/**
 	 * This will implement Boyer-Moore
+	 * 
+	 * Currently badChar is done naively,
+	 * so it's sensible to instantiate this tamplate
+	 * only with char or wchar
 	 */
 	template <class Ch>
 	class Pattern {
 	public:
+		static const char Template_Arg_Limit[sizeof(Ch) > 2 ? -1 : 0];
 		typedef POD::TBuffer<Ch> Buf;
 		
-		Pattern(const Buf& pattern) : pattern(pattern) {
+		Pattern(const Buf& pattern) : pattern(pattern), badChar(0), goodShift(0) {
 		}
 		
-		void init(const Buf& _pattern) {
+		~Pattern() {
+		}
+		
+		void reset(const Buf& _pattern) {
 			pattern = _pattern;
 		}
 		
@@ -41,8 +49,33 @@ namespace Search {
 		const Buf& getPattern() const {
 			return pattern;
 		}
+		
+	protected:
+		void init() {
+			if (goodShift)
+				delete [] goodShift;
+			if (!badChar)
+				badChar = new Ch[badCharLen];
+			
+			if (sizeof(Ch) == 1) {
+				memset(badChar, pattern.len, badCharLen);
+				
+			} else {
+				for(size_t i = 0; i < badCharLen; ++i) {
+					badChar[i] = pattern.len;
+				}
+			}
+			
+			for (size_t i = 0; i < pattern.len; ++i) {
+				badChar[pattern.ptr[i]] = pattern.len - i - 1;
+			}
+		}
+		
 	private:
 		Buf pattern;
+		static const size_t badCharLen = 1 << (sizeof(Ch)*8);
+		Ch* badChar;
+		Ch* goodShift;
 	};
 	
 	
