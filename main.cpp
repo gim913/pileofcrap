@@ -1,8 +1,10 @@
+#include "types.h"
+
 #include <gtest/gtest.h>
 
 namespace {
-	TEST(FirstTest, Test01) {
-		ASSERT_EQ(0,0);
+	TEST(BufferTest, TestLen) {
+		ASSERT_EQ(POD::ConstBuffer("foobar", 7).len, 7);
 	}
 }
 

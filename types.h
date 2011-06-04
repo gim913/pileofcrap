@@ -1,3 +1,8 @@
+/**
+ * Some basic type wrappers
+ * 
+ * Michal 'GiM' Spadlinski
+ */
 #ifndef GIM_TYPES_H
 #define GIM_TYPES_H
 
@@ -12,9 +17,10 @@ typedef unsigned __int32    e_uint;
 typedef signed __int64      e_long;
 typedef unsigned __int64    e_ulong;
 
-
 #else /* !_MSC_VER */
 
+/* size_t */
+#  include <stddef.h>
 #  include <stdint.h>
 
 typedef int8_t              e_byte;
@@ -28,4 +34,20 @@ typedef uint64_t            e_ulong;
 
 #endif /* _MSC_VER */
 
+namespace POD {
+	template <class T>
+	struct TBuffer
+	{
+		TBuffer(T* ptr, size_t len) : ptr(ptr), len(len) {}
+		
+		template <size_t S>
+		TBuffer(T (&buf)[S]) : ptr(buf), len(S*sizeof(T)) {}
+		
+		T*     ptr;
+		size_t len;
+	};
+	
+	typedef TBuffer<const char> ConstBuffer;
+	typedef TBuffer<char> Buffer;
+}
 #endif
