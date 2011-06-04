@@ -9,7 +9,9 @@
 
 #include "../types.h"
 
+#include <iostream>
 #include <algorithm>
+#include <cstring>
 
 template <class U> struct UnConst {
 	typedef U Result;
@@ -48,11 +50,13 @@ namespace Search {
 		//typedef typename UnConst<Ch>::Result Rch;
 		typedef POD::TBuffer<Ch> Buf;
 		
-		Pattern(const Buf& pattern) : pattern(pattern), badChar(0) {
+		Pattern(const Buf& pattern) : pattern(pattern), badChar(0), goodShift(0) {
 			init();
 		}
 		
 		~Pattern() {
+			delete [] badChar;
+			delete [] goodShift;
 		}
 		
 		void reset(const Buf& _pattern) {
@@ -72,7 +76,7 @@ namespace Search {
 				if (j < 0) {
 					return Buf(hayStack.ptr + i, hayStack.len - i);
 				}
-				i += std::max(1, badChar[hayStack.ptr[i+j]]+ j +1);
+				i += std::max(1, badChar[hayStack.ptr[i+j]]+ j);
 			}
 			return Buf(0, 0);
 		}
@@ -83,30 +87,77 @@ namespace Search {
 		
 	protected:
 		void init() {
-			//if (goodShift)
-			//	delete [] goodShift;
+			int m = pattern.len;
+			if (goodShift)
+				delete [] goodShift;
 				
 			if (!badChar)
 				badChar = new int[badCharLen];
 			
 			// is there sense to do that?
 			if (sizeof(Ch) == 1) {
-				memset(badChar, pattern.len, badCharLen);
+				memset(badChar, m, badCharLen);
 				
 			} else {
 				for(size_t i = 0; i < badCharLen; ++i) {
-					badChar[i] = pattern.len;
+					badChar[i] = m;
 				}
 			}
 			
-			for (size_t i = 0; i < pattern.len; ++i) {
-				badChar[pattern.ptr[i]] = -i - 1;
+			for (size_t i = 0; i < m; ++i) {
+				badChar[pattern.ptr[i]] = -i;
 			}
+			
+			// this will temporarily hold length
+			// of a match with a suffix of a pattern
+			int* suffixes = new int[m];
+			suffixes[m - 1] = m;
+			int matchEnd, matchBegin = m -1;
+			for (int i = m - 2; i >= 0; --i) {
+				if (i > matchBegin && suffixes[i + m - 1 - matchEnd] < i - matchBegin) {
+					suffixes[i] = suffixes[i + m - 1 - matchEnd];
+					
+				} else {
+					if (i < matchBegin) {
+						matchBegin = i;
+					}
+					matchEnd = i;
+					while (matchBegin >= 0 && pattern.ptr[matchBegin] == pattern.ptr[matchBegin + m - 1 - matchEnd])
+						--matchBegin;
+					suffixes[i] = matchEnd - matchBegin;
+				}
+			}
+			
+			
+			goodShift = new int[m];
+			for(size_t i = 0; i < m; ++i) {
+				goodShift[i] = m;
+			}
+			
+			int j = 0;
+			const int last = m - 1;
+			for (int i = last; i >= 0; --i) {
+				// if the suffix is also the prefix
+				if (suffixes[i] == i+1) {
+					for (; j < last - i; ++j) { 
+						if (goodShift[j] == m) {
+							goodShift[j] = last - i;
+						}
+					}
+				}
+			}
+			
+			for (int i = 0; i < m - 1; ++i) {
+				goodShift[last - suffixes[i]] = last - i;
+			}
+			
+			delete [] suffixes;
 		}
 		
 	private:
 		Buf pattern;
 		int* badChar;
+		int* goodShift;
 	};
 	
 	
