@@ -4,6 +4,7 @@
   <Dependencies/>
   <VirtualDirectory Name="src">
     <File Name="main.cpp"/>
+    <File Name="types.h"/>
   </VirtualDirectory>
   <Dependencies Name="Debug">
     <Project Name="gtest"/>
@@ -80,4 +81,5 @@
       <ResourceCompiler Options=""/>
     </GlobalSettings>
   </Settings>
+  <VirtualDirectory Name="Search"/>
 </CodeLite_Project>
