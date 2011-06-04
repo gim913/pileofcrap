@@ -10,8 +10,16 @@ namespace {
 	
 	TEST(SearchPattern, TestSelf) {
 		POD::ConstBuffer p("Nupogodi", sizeof("Nupogodi")-1);
-		POD::ConstBuffer t = Search::pattern(p, p);
-		ASSERT_EQ(p.ptr, t.ptr);
+		POD::ConstBuffer r = Search::pattern(p, p);
+		ASSERT_EQ(p.ptr, r.ptr);
+	}
+
+	TEST(SearchPattern, TestInit) {
+		POD::ConstBuffer a("Nupogodi", sizeof("Nupogodi")-1);
+		POD::ConstBuffer b("foobar", sizeof("foobar")-1);
+		Search::Pattern<const char> search(a);
+		search.init(b);
+		ASSERT_EQ(b.ptr, search.getPattern().ptr);
 	}
 }
 

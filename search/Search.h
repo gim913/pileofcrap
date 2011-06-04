@@ -25,18 +25,22 @@ namespace Search {
 	template <class Ch>
 	class Pattern {
 	public:
-		typedef POD::TBuffer< Ch > Buf;
+		typedef POD::TBuffer<Ch> Buf;
 		
 		Pattern(const Buf& pattern) : pattern(pattern) {
 		}
 		
 		void init(const Buf& _pattern) {
+			pattern = _pattern;
 		}
 		
 		Buf search(const Buf& hayStack) {
 			return Buf(0, 0);
 		}
 		
+		const Buf& getPattern() const {
+			return pattern;
+		}
 	private:
 		Buf pattern;
 	};
