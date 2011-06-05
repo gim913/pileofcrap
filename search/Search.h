@@ -74,7 +74,7 @@ namespace Search {
 				if (j < 0) {
 					return Buf(hayStack.ptr + i, hayStack.len - i);
 				}
-				i += std::max(1, badChar[hayStack.ptr[i+j]]+ j);
+				i += std::max(goodShift[i], badChar[hayStack.ptr[i+j]]+j);
 			}
 			return Buf(0, 0);
 		}
