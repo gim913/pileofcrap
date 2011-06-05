@@ -73,7 +73,7 @@ namespace Search {
 				if (j < 0) {
 					return Buf(hayStack.ptr + i, hayStack.len - i);
 				}
-				i += std::max(goodShift[j], badChar[hayStack.ptr[i+j]]+ j);
+				i += std::max(goodShift[j], badChar[hayStack.ptr[i+j]]+j);
 			}
 			return Buf(0, 0);
 		}
@@ -161,16 +161,19 @@ namespace Search {
 
 	/**
 	 * naive implementation
+	 * added badChar heuristics from B-M
 	 */
 	template <class Ch>
 	class PatternDot {
 	public:
+		static const size_t Bad_Char_Len = 1 << (sizeof(Ch)*8);
 		typedef typename UnConst<Ch>::Result PlainCh;
 		typedef POD::TBuffer<Ch> Buf;
 
 		/// decide if the ctor should take Buf + dot
 		/// or some pod, that will wrap them (DotBuffer)
 		PatternDot(const Buf& pattern, PlainCh dot) : pattern(pattern), dot(dot) {
+			init();
 		}
 		
 		~PatternDot() {
@@ -179,6 +182,7 @@ namespace Search {
 		void reset(const Buf& _pattern, PlainCh dot) {
 			pattern = _pattern;
 			dot = dot;
+			init();
 		}
 		
 		Buf search(const Buf& hayStack) {
@@ -193,7 +197,7 @@ namespace Search {
 				if (j < 0) {
 					return Buf(hayStack.ptr + i, hayStack.len - i);
 				}
-				i += 1;
+				i += std::max(1, badChar[hayStack.ptr[i+j]]+j);
 			}
 			return Buf(0, 0);
 		}
@@ -204,10 +208,18 @@ namespace Search {
 		
 	protected:
 		void init() {
+			const int m = static_cast<int>(pattern.len);
+			const int last = m-1;
+			int lastDotPos = last;
+			
+			for(size_t i = 0; i < Bad_Char_Len; ++i) {
+				badChar[i] = -m;
+			}
 		}
 		
 	private:
 		Buf pattern;
+		int badChar[Bad_Char_Len];
 		PlainCh dot;
 	};
 	
