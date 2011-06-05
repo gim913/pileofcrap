@@ -212,9 +212,29 @@ namespace Search {
 			const int last = m-1;
 			int lastDotPos = last;
 			
-			for(size_t i = 0; i < Bad_Char_Len; ++i) {
-				badChar[i] = -m;
+			while(lastDotPos > 0 && pattern.ptr[lastDotPos] != dot) {
+				--lastDotPos;
 			}
+			
+			if (!lastDotPos)
+				lastDotPos = -1;
+
+			for(size_t i = 0; i < Bad_Char_Len; ++i) {
+				badChar[i] = -lastDotPos;
+			}
+			
+			// i must be int due to the comparison below
+			for (int i = 0; i < last; ++i) {
+				if (pattern.ptr[i] != dot) {
+					if (-i < badChar[pattern.ptr[i]])
+						badChar[pattern.ptr[i]] = -i;
+				}
+			}
+			
+//			for(size_t i = 0; i < Bad_Char_Len; ++i) {
+//				std::cout << badChar[i] << " ";
+//				if (!((i+1)%16)) std::cout << std::endl;
+//			}
 		}
 		
 	private:

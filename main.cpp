@@ -123,6 +123,18 @@ namespace {
 		POD::ConstBuffer r = Search::patternDot(p, '.', txt);
 		ASSERT_EQ( (txt.ptr + 2), r.ptr);
 	}
+	
+	TEST_F(TestMississippiDot, TestMiddle7) {
+		POD::ConstBuffer p("si.", sizeof("si.")-1);
+		POD::ConstBuffer r = Search::patternDot(p, '.', txt);
+		ASSERT_EQ( (txt.ptr + 3), r.ptr);
+	}
+
+	TEST_F(TestMississippiDot, TestMiddle8) {
+		POD::ConstBuffer p("i.pi", sizeof("i.pi")-1);
+		POD::ConstBuffer r = Search::patternDot(p, '.', txt);
+		ASSERT_EQ( (txt.ptr + 7), r.ptr);
+	}
 }
 
 int main(int argc, char **argv) {
