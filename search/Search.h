@@ -45,15 +45,14 @@ namespace Search {
 	class Pattern {
 	public:
 		static const char Template_Arg_Limit[sizeof(Ch) > 2 ? -1 : 0];
-		static const size_t badCharLen = 1 << (sizeof(Ch)*8);
+		static const size_t Bad_Char_Len = 1 << (sizeof(Ch)*8);
 		typedef POD::TBuffer<Ch> Buf;
 		
-		Pattern(const Buf& pattern) : pattern(pattern), badChar(0), goodShift(0) {
+		Pattern(const Buf& pattern) : pattern(pattern), goodShift(0) {
 			init();
 		}
 		
 		~Pattern() {
-			delete [] badChar;
 			delete [] goodShift;
 		}
 		
@@ -74,7 +73,7 @@ namespace Search {
 				if (j < 0) {
 					return Buf(hayStack.ptr + i, hayStack.len - i);
 				}
-				i += std::max(goodShift[i], badChar[hayStack.ptr[i+j]]+j);
+				i += std::max(1, badChar[hayStack.ptr[i+j]]+ j);
 			}
 			return Buf(0, 0);
 		}
@@ -88,18 +87,9 @@ namespace Search {
 			int m = pattern.len;
 			if (goodShift)
 				delete [] goodShift;
-				
-			if (!badChar)
-				badChar = new int[badCharLen];
-			
-			// is there sense to do that?
-			if (sizeof(Ch) == 1) {
-				memset(badChar, m, badCharLen);
-				
-			} else {
-				for(size_t i = 0; i < badCharLen; ++i) {
-					badChar[i] = m;
-				}
+
+			for(size_t i = 0; i < Bad_Char_Len; ++i) {
+				badChar[i] = 1;
 			}
 			
 			for (size_t i = 0; i < m; ++i) {
@@ -154,7 +144,7 @@ namespace Search {
 		
 	private:
 		Buf pattern;
-		int* badChar;
+		int badChar[Bad_Char_Len];
 		int* goodShift;
 	};
 	
