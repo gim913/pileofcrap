@@ -61,10 +61,14 @@ namespace Search {
 			init();
 		}
 		
+		// I was thinking about doing Turbo-BM here, but BM
+		// is easier to understand, so I hope it'll be easier
+		// for someone else to adjust this to ones needs
 		Buf search(const Buf& hayStack) {
+			const int last = static_cast<int>(pattern.len) - 1;
 			size_t i = 0;
 			while (i <= (hayStack.len - pattern.len)) {
-				int j = static_cast<int>(pattern.len) - 1;
+				int j = last;
 				while (j>= 0 && pattern.ptr[j] == hayStack.ptr[i+j]) {
 					j--;
 				}
@@ -73,12 +77,7 @@ namespace Search {
 				}
 				int gs = goodShift[j];
 				int bc = badChar[hayStack.ptr[i+j]]+j;
-				if (gs > bc) {
-					i += gs;
-					
-				} else {
-					i += bc;
-				}
+				i += std::max(gs, bc);
 			}
 			return Buf(0, 0);
 		}
