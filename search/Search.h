@@ -36,18 +36,16 @@ template <class U> struct UnConst<const U&> {
 namespace Search {
 	
 	/**
-	 * This will implement Boyer-Moore
+	 * Pattern matching using Boyer-Moore
 	 * 
-	 * Currently badChar is done naively,
-	 * so it's sensible to instantiate this tamplate
-	 * only with char or wchar
+	 * Currently badChar is done naively, so it's sensible
+	 * to instantiate this tamplate only with char or wchar
 	 */
 	template <class Ch>
 	class Pattern {
 	public:
 		static const char Template_Arg_Limit[sizeof(Ch) > 2 ? -1 : 0];
 		static const size_t badCharLen = 1 << (sizeof(Ch)*8);
-		//typedef typename UnConst<Ch>::Result Rch;
 		typedef POD::TBuffer<Ch> Buf;
 		
 		Pattern(const Buf& pattern) : pattern(pattern), badChar(0), goodShift(0) {
@@ -164,6 +162,66 @@ namespace Search {
 	template <class Ch>
 	POD::TBuffer<Ch> pattern(const POD::TBuffer<Ch>& needle, const POD::TBuffer<Ch>& hayStack) {
 		Pattern<Ch> pat(needle);
+		return pat.search(hayStack);
+	}
+
+
+	/**
+	 * naive implementation
+	 */
+	template <class Ch>
+	class PatternDot {
+	public:
+		typedef typename UnConst<Ch>::Result PlainCh;
+		typedef POD::TBuffer<Ch> Buf;
+
+		/// decide if the ctor should take Buf + dot
+		/// or some pod, that will wrap them (DotBuffer)
+		PatternDot(const Buf& pattern, PlainCh dot) : pattern(pattern), dot(dot) {
+		}
+		
+		~PatternDot() {
+		}
+		
+		void reset(const Buf& _pattern, PlainCh dot) {
+			pattern = _pattern;
+			dot = dot;
+		}
+		
+		Buf search(const Buf& hayStack) {
+			size_t i = 0;
+			while (i <= (hayStack.len - pattern.len)) {
+				int j;
+				for (j = static_cast<int>(pattern.len) - 1; j >= 0; j--) {
+					if (pattern.ptr[j] != hayStack.ptr[i+j] && pattern.ptr[j] != dot) {
+						break;
+					}
+				}
+				if (j < 0) {
+					return Buf(hayStack.ptr + i, hayStack.len - i);
+				}
+				i += 1;
+			}
+			return Buf(0, 0);
+		}
+		
+		const Buf& getPattern() const {
+			return pattern;
+		}
+		
+	protected:
+		void init() {
+		}
+		
+	private:
+		Buf pattern;
+		PlainCh dot;
+	};
+	
+	
+	template <class Ch>
+	POD::TBuffer<Ch> patternDot(const POD::TBuffer<Ch>& needle, typename PatternDot<Ch>::PlainCh dot, const POD::TBuffer<Ch>& hayStack) {
+		PatternDot<Ch> pat(needle, dot);
 		return pat.search(hayStack);
 	}
 }
