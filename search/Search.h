@@ -73,7 +73,7 @@ namespace Search {
 				if (j < 0) {
 					return Buf(hayStack.ptr + i, hayStack.len - i);
 				}
-				i += std::max(1, badChar[hayStack.ptr[i+j]]+ j);
+				i += std::max(goodShift[j], badChar[hayStack.ptr[i+j]]+ j);
 			}
 			return Buf(0, 0);
 		}
@@ -84,7 +84,9 @@ namespace Search {
 		
 	protected:
 		void init() {
-			int m = pattern.len;
+			const int m = pattern.len;
+			const int last = m - 1;
+			
 			if (goodShift)
 				delete [] goodShift;
 
@@ -92,7 +94,7 @@ namespace Search {
 				badChar[i] = 1;
 			}
 			
-			for (size_t i = 0; i < m; ++i) {
+			for (size_t i = 0; i < last; ++i) {
 				badChar[pattern.ptr[i]] = -i;
 			}
 			
@@ -100,18 +102,19 @@ namespace Search {
 			// of a match with a suffix of a pattern
 			int* suffixes = new int[m];
 			suffixes[m - 1] = m;
-			int matchEnd, matchBegin = m -1;
+			int matchEnd, matchBegin = last;
 			for (int i = m - 2; i >= 0; --i) {
-				if (i > matchBegin && suffixes[i + m - 1 - matchEnd] < i - matchBegin) {
-					suffixes[i] = suffixes[i + m - 1 - matchEnd];
+				if (i > matchBegin && suffixes[i + last - matchEnd] < i - matchBegin) {
+					suffixes[i] = suffixes[i + last - matchEnd];
 					
 				} else {
 					if (i < matchBegin) {
 						matchBegin = i;
 					}
 					matchEnd = i;
-					while (matchBegin >= 0 && pattern.ptr[matchBegin] == pattern.ptr[matchBegin + m - 1 - matchEnd])
+					while (matchBegin >= 0 && pattern.ptr[matchBegin] == pattern.ptr[last + matchBegin - matchEnd]) {
 						--matchBegin;
+					}
 					suffixes[i] = matchEnd - matchBegin;
 				}
 			}
@@ -123,7 +126,6 @@ namespace Search {
 			}
 			
 			int j = 0;
-			const int last = m - 1;
 			for (int i = last; i >= 0; --i) {
 				// if the suffix is also the prefix
 				if (suffixes[i] == i+1) {
@@ -135,7 +137,8 @@ namespace Search {
 				}
 			}
 			
-			for (int i = 0; i < m - 1; ++i) {
+			// '< last', cause suffixes[last] is always m
+			for (int i = 0; i < last; ++i) {
 				goodShift[last - suffixes[i]] = last - i;
 			}
 			
