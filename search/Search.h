@@ -64,16 +64,21 @@ namespace Search {
 		Buf search(const Buf& hayStack) {
 			size_t i = 0;
 			while (i <= (hayStack.len - pattern.len)) {
-				int j;
-				for (j = static_cast<int>(pattern.len) - 1; j >= 0; j--) {
-					if (pattern.ptr[j] != hayStack.ptr[i+j]) {
-						break;
-					}
+				int j = static_cast<int>(pattern.len) - 1;
+				while (j>= 0 && pattern.ptr[j] == hayStack.ptr[i+j]) {
+					j--;
 				}
 				if (j < 0) {
 					return Buf(hayStack.ptr + i, hayStack.len - i);
 				}
-				i += std::max(goodShift[j], badChar[hayStack.ptr[i+j]]+j);
+				int gs = goodShift[j];
+				int bc = badChar[hayStack.ptr[i+j]]+j;
+				if (gs > bc) {
+					i += gs;
+					
+				} else {
+					i += bc;
+				}
 			}
 			return Buf(0, 0);
 		}
