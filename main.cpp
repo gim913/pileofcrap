@@ -135,6 +135,24 @@ namespace {
 		POD::ConstBuffer r = Search::patternDot(p, '.', txt);
 		ASSERT_EQ( (txt.ptr + 7), r.ptr);
 	}
+	
+	struct TestMississippiMulti : public ::testing::Test {
+		TestMississippiMulti() : txt("Mississippi", sizeof("Mississippi")-1) {}
+		POD::ConstBuffer txt;
+		static const POD::ConstBuffer pats[3];
+	};
+	
+	const POD::ConstBuffer TestMississippiMulti::pats[] = {
+		{ "iss", 3 },
+		{ "ipp", 3 },
+		{ "ssip", 4 }
+	};
+
+#define _countof(x) (sizeof(x)/sizeof(*x))
+	TEST_F(TestMississippiMulti, Test1) {
+		POD::ConstBuffer r = Search::multiPattern(pats, _countof(pats), txt);
+		ASSERT_EQ(txt.ptr, r.ptr);
+	}
 }
 
 int main(int argc, char **argv) {
