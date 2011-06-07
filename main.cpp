@@ -155,7 +155,7 @@ namespace {
 	}
 	
 	TEST_F(TestMississippiMulti, Test2) {
-		POD::ConstBuffer txt("Mxssissippi", sizeof("Mxssissippi")-1);
+		POD::ConstBuffer txt("Mxssxssippi", sizeof("Mxssxssippi")-1);
 		POD::ConstBuffer r = Search::multiPattern(pats, _countof(pats), txt);
 		ASSERT_EQ(txt.ptr+5, r.ptr);
 	}

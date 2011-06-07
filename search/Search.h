@@ -284,15 +284,23 @@ namespace Search {
 			while (i <= (hayStack.len - minPattern)) {
 				int j;
 				for (j = minPattern - 1; j >= 0; --j) {
-					std::cout << "checking: " << j << " " << hayStack.ptr[i+j] << std::endl;
+//					std::cout << "checking: " << j << " " << hayStack.ptr[i+j] << std::endl;
 					if (!GRAMGET(gramTable[j], hayStack.ptr[i+j])) {
 						i += j;
 						break;
 					}
 				}
 				if (j < 0) {
-					std::cout << " check match at pos: " << i << std::endl;
-					return Buf(hayStack.ptr + i, hayStack.len - i);
+					// ATM I don't need it now optimized for large number of
+					// patterns so doing this naively is fine
+					Ch elem = hayStack.ptr[i];
+					for (size_t k = 0; k < patternsCount; k++) {
+						if (patterns[k].ptr[0] == elem && patterns[k].len <= hayStack.len - i) {
+							if (!memcmp(hayStack.ptr + i, patterns[k].ptr, patterns[k].len)) {
+								return Buf(hayStack.ptr + i, hayStack.len - i);
+							}
+						}
+					}
 				}
 				++i;
 			}
@@ -319,20 +327,19 @@ namespace Search {
 			
 			for (size_t i = 0; i < patternsCount; ++i) {
 				for (size_t j = 0; j < minPattern; ++j) {
-					std::cout << "adding: " << patterns[i].ptr[j] << std::endl;
 					for (size_t k = j; k < minPattern; ++k) {
 						GRAMSET(gramTable[k], patterns[i].ptr[j]);
 					}
 				}
 			}
 			
-			for (size_t j = 0; j < minPattern; ++j) {
-				for (size_t k = 0; k < 256; ++k) {
-					int t = GRAMGET(gramTable[j], k);
-					std::cout << (char)(t?k:'_') << "";
-				}
-				std::cout << std::endl;
-			}
+//			for (size_t j = 0; j < minPattern; ++j) {
+//				for (size_t k = 0; k < 256; ++k) {
+//					int t = GRAMGET(gramTable[j], k);
+//					std::cout << (char)(t?k:'_') << "";
+//				}
+//				std::cout << std::endl;
+//			}
 			initialized = true;
 		}
 		
