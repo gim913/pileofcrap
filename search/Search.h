@@ -286,7 +286,7 @@ namespace Search {
 				for (j = minPattern - 1; j >= 0; --j) {
 					std::cout << "checking: " << j << " " << hayStack.ptr[i+j] << std::endl;
 					if (!GRAMGET(gramTable[j], hayStack.ptr[i+j])) {
-						i += j+1;
+						i += j;
 						break;
 					}
 				}

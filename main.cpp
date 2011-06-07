@@ -137,8 +137,7 @@ namespace {
 	}
 	
 	struct TestMississippiMulti : public ::testing::Test {
-		TestMississippiMulti() : txt("Mississippi", sizeof("Mississippi")-1) {}
-		POD::ConstBuffer txt;
+		TestMississippiMulti() {}
 		static const POD::ConstBuffer pats[3];
 	};
 	
@@ -150,8 +149,15 @@ namespace {
 
 #define _countof(x) (sizeof(x)/sizeof(*x))
 	TEST_F(TestMississippiMulti, Test1) {
+		POD::ConstBuffer txt("Mississippi", sizeof("Mississippi")-1);
 		POD::ConstBuffer r = Search::multiPattern(pats, _countof(pats), txt);
-		ASSERT_EQ(txt.ptr, r.ptr);
+		ASSERT_EQ(txt.ptr+1, r.ptr);
+	}
+	
+	TEST_F(TestMississippiMulti, Test2) {
+		POD::ConstBuffer txt("Mxssissippi", sizeof("Mxssissippi")-1);
+		POD::ConstBuffer r = Search::multiPattern(pats, _countof(pats), txt);
+		ASSERT_EQ(txt.ptr+5, r.ptr);
 	}
 }
 
