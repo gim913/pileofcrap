@@ -256,14 +256,16 @@ namespace Search {
 	
 	/**
 	 * BMH+qG
+	 * based on "Multi-Pattern String Matching with q-grams"
+	 * http://www.cs.hut.fi/~tarhio/papers/jea.pdf
 	 * 
 	 * shortest pattern should be < 100
 	 * this is sensible to be parametrized only with char/e_ubyte
 	 */
 	template <class Ch>
 	class MultiPattern {
-#define GRAMSET(cell,bt) ((cell[((unsigned int)bt)>>5]) |= (1 << (bt&0x1f)))
-#define GRAMGET(cell,bt) ((cell[((unsigned int)bt)>>5]) &  (1 << (bt&0x1f)))
+#define GRAMSET(cell, ptr) ((cell[((unsigned int)(*(ptr)))>>5]) |= (1 << ((*(ptr))&0x1f)))
+#define GRAMGET(cell, ptr) ((cell[((unsigned int)(*(ptr)))>>5]) &  (1 << ((*(ptr))&0x1f)))
 	public:
 		typedef POD::TBuffer<Ch> Buf;
 		// memory needed 100*8*4  for gram table 100*32
@@ -285,7 +287,7 @@ namespace Search {
 				int j;
 				for (j = minPattern - 1; j >= 0; --j) {
 //					std::cout << "checking: " << j << " " << hayStack.ptr[i+j] << std::endl;
-					if (!GRAMGET(gramTable[j], hayStack.ptr[i+j])) {
+					if (!GRAMGET(gramTable[j], hayStack.ptr +i +j)) {
 						i += j;
 						break;
 					}
@@ -328,7 +330,7 @@ namespace Search {
 			for (size_t i = 0; i < patternsCount; ++i) {
 				for (size_t j = 0; j < minPattern; ++j) {
 					for (size_t k = j; k < minPattern; ++k) {
-						GRAMSET(gramTable[k], patterns[i].ptr[j]);
+						GRAMSET(gramTable[k], patterns[i].ptr + j);
 					}
 				}
 			}
