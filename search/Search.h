@@ -262,14 +262,12 @@ namespace Search {
 	 * shortest pattern should be < 100
 	 * this is sensible to be parametrized only with char/e_ubyte
 	 */
-	template <class Ch>
+	template <class Ch, size_t Qgrams_Count = 7>
 	class MultiPattern {
-#define GRAMSET(cell, ptr) ((cell[((unsigned int)(*(ptr)))>>5]) |= (1 << ((*(ptr))&0x1f)))
-#define GRAMGET(cell, ptr) ((cell[((unsigned int)(*(ptr)))>>5]) &  (1 << ((*(ptr))&0x1f)))
+#define GRAMSET(cell, ptr) ((cell[(((unsigned int)(*(ushort*)(ptr)))>>5)]) |= (1 << ((*(ushort*)(ptr))&0x1f)))
+#define GRAMGET(cell, ptr) ((cell[(((unsigned int)(*(ushort*)(ptr)))>>5)]) &  (1 << ((*(ushort*)(ptr))&0x1f)))
 	public:
 		typedef POD::TBuffer<Ch> Buf;
-		// memory needed 100*8*4  for gram table 100*32
-		static const size_t Max_Shortest_Pattern = 100;
 
 		MultiPattern(const Buf* patterns, size_t patternsCount) : patterns(patterns), patternsCount(patternsCount) {
 			init();
@@ -282,17 +280,17 @@ namespace Search {
 			size_t i = 0;
 			if (!initialized)
 				return Buf(0, 0);
-			std::cout << "matching ;p " << std::endl;
+			//std::cout << "matching ;p " << std::endl;
 			while (i <= (hayStack.len - minPattern)) {
 				int j;
-				for (j = minPattern - 1; j >= 0; --j) {
-//					std::cout << "checking: " << j << " " << hayStack.ptr[i+j] << std::endl;
+				for (j = minPattern - 1 -1; j >= 0; --j) {
+					//std::cout << "checking: " << j << " " << hayStack.ptr[i+j] << hayStack.ptr[i+j+1] << " " << (hayStack.ptr +i+j) << std::endl;
 					if (!GRAMGET(gramTable[j], hayStack.ptr +i +j)) {
 						i += j;
 						break;
 					}
 				}
-				if (j < 0) {
+				if (j <= 0) {
 					// ATM I don't need it now optimized for large number of
 					// patterns so doing this naively is fine
 					Ch elem = hayStack.ptr[i];
@@ -315,33 +313,27 @@ namespace Search {
 		
 	protected:
 		void init() {
-			minPattern = Max_Shortest_Pattern+1;
+			minPattern = Qgrams_Count + 1;
 			// find shortest pattern
 			for (size_t i = 0; i < patternsCount; ++i) {
 				if (patterns[i].len < minPattern)
 					minPattern = patterns[i].len;
 			}
 			initialized = false;
-			if (minPattern == Max_Shortest_Pattern+1)
+			if (minPattern <= 1) {
 				return;
+			}
 
 			memset (gramTable, 0, sizeof(gramTable));
 			
 			for (size_t i = 0; i < patternsCount; ++i) {
-				for (size_t j = 0; j < minPattern; ++j) {
-					for (size_t k = j; k < minPattern; ++k) {
+				for (size_t j = 0; j < minPattern - 1; ++j) {
+					for (size_t k = j; k < minPattern -1; ++k) {
+						// std::cout << "adding : " << patterns[i].ptr[j] << patterns[i].ptr[j+1] << " on pos: " << k << std::endl;
 						GRAMSET(gramTable[k], patterns[i].ptr + j);
 					}
 				}
 			}
-			
-//			for (size_t j = 0; j < minPattern; ++j) {
-//				for (size_t k = 0; k < 256; ++k) {
-//					int t = GRAMGET(gramTable[j], k);
-//					std::cout << (char)(t?k:'_') << "";
-//				}
-//				std::cout << std::endl;
-//			}
 			initialized = true;
 		}
 		
@@ -349,7 +341,8 @@ namespace Search {
 		const Buf* patterns;
 		size_t patternsCount;
 		size_t minPattern;
-		e_uint gramTable[Max_Shortest_Pattern][8];
+		// 2048 * 4 * Q (8192 * Q=7 = 56k)
+		e_uint gramTable[Qgrams_Count][2048];
 		bool initialized;
 #undef GRAMGET
 #undef GRAMSET
