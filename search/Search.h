@@ -264,10 +264,12 @@ namespace Search {
 	 */
 	template <class Ch, size_t Qgrams_Count = 7>
 	class MultiPattern {
-#define GRAMSET(cell, ptr) ((cell[(((unsigned int)(*(ushort*)(ptr)))>>5)]) |= (1 << ((*(ushort*)(ptr))&0x1f)))
-#define GRAMGET(cell, ptr) ((cell[(((unsigned int)(*(ushort*)(ptr)))>>5)]) &  (1 << ((*(ushort*)(ptr))&0x1f)))
 	public:
 		typedef POD::TBuffer<Ch> Buf;
+		static const int Qgram_Size = (1 << 16) / (8 * sizeof(unsigned int));
+		
+#define GRAMSET(cell, idx, ptr) ((cell[idx*Qgram_Size + (((unsigned int)(*(ushort*)(ptr)))>>5)]) |= (1 << ((*(ushort*)(ptr))&0x1f)))
+#define GRAMGET(cell, idx, ptr) ((cell[idx*Qgram_Size + (((unsigned int)(*(ushort*)(ptr)))>>5)]) &  (1 << ((*(ushort*)(ptr))&0x1f)))
 
 		MultiPattern(const Buf* patterns, size_t patternsCount) : patterns(patterns), patternsCount(patternsCount) {
 			init();
@@ -285,7 +287,7 @@ namespace Search {
 				int j;
 				for (j = minPattern - 1 -1; j >= 0; --j) {
 					//std::cout << "checking: " << j << " " << hayStack.ptr[i+j] << hayStack.ptr[i+j+1] << " " << (hayStack.ptr +i+j) << std::endl;
-					if (!GRAMGET(gramTable[j], hayStack.ptr +i +j)) {
+					if (!GRAMGET(gramTable, j, hayStack.ptr +i +j)) {
 						i += j;
 						break;
 					}
@@ -330,7 +332,7 @@ namespace Search {
 				for (size_t j = 0; j < minPattern - 1; ++j) {
 					for (size_t k = j; k < minPattern -1; ++k) {
 						// std::cout << "adding : " << patterns[i].ptr[j] << patterns[i].ptr[j+1] << " on pos: " << k << std::endl;
-						GRAMSET(gramTable[k], patterns[i].ptr + j);
+						GRAMSET(gramTable, k, patterns[i].ptr + j);
 					}
 				}
 			}
@@ -342,7 +344,7 @@ namespace Search {
 		size_t patternsCount;
 		size_t minPattern;
 		// 2048 * 4 * Q (8192 * Q=7 = 56k)
-		e_uint gramTable[Qgrams_Count][2048];
+		e_uint gramTable[Qgrams_Count * Qgram_Size];
 		bool initialized;
 #undef GRAMGET
 #undef GRAMSET
