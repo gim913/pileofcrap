@@ -259,8 +259,11 @@ namespace Search {
 	 * based on "Multi-Pattern String Matching with q-grams"
 	 * http://www.cs.hut.fi/~tarhio/papers/jea.pdf
 	 * 
-	 * shortest pattern should be < 100
 	 * this is sensible to be parametrized only with char/e_ubyte
+	 * 
+	 * if Qgrams_Count is <= 7, qgrams will be stored in
+	 * statically allocated memory, otherwise memory for
+	 * will qgrams will be dynamically allocated
 	 */
 	template <class Ch, size_t Qgrams_Count = 7>
 	class MultiPattern {
@@ -271,11 +274,21 @@ namespace Search {
 #define GRAMSET(cell, idx, ptr) ((cell[idx*Qgram_Size + (((unsigned int)(*(ushort*)(ptr)))>>5)]) |= (1 << ((*(ushort*)(ptr))&0x1f)))
 #define GRAMGET(cell, idx, ptr) ((cell[idx*Qgram_Size + (((unsigned int)(*(ushort*)(ptr)))>>5)]) &  (1 << ((*(ushort*)(ptr))&0x1f)))
 
-		MultiPattern(const Buf* patterns, size_t patternsCount) : patterns(patterns), patternsCount(patternsCount) {
+		// remember that members are initialized in order
+		// they are in the class and not in the order of initialization list
+		MultiPattern(const Buf* patterns, size_t patternsCount) :
+				patterns(patterns),
+				patternsCount(patternsCount),
+				heapTable(Qgrams_Count > 7 ? new e_uint[Qgram_Size * Qgrams_Count] : NULL),
+				gramTable(Qgrams_Count > 7 ? heapTable : stackTable)
+		{
 			init();
 		}
 		
 		~MultiPattern() {
+			if (heapTable) {
+				std::cout << "DEALLOC!!!!"<< std::endl;
+			}
 		}
 		
 		Buf search(const Buf& hayStack) {
@@ -344,7 +357,9 @@ namespace Search {
 		size_t patternsCount;
 		size_t minPattern;
 		// 2048 * 4 * Q (8192 * Q=7 = 56k)
-		e_uint gramTable[Qgrams_Count * Qgram_Size];
+		e_uint *heapTable;
+		e_uint stackTable[Qgrams_Count <= 7 ? (Qgrams_Count * Qgram_Size) : 1];
+		e_uint *gramTable;
 		bool initialized;
 #undef GRAMGET
 #undef GRAMSET
