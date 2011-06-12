@@ -269,7 +269,7 @@ namespace Search {
 	class MultiPattern {
 	public:
 		typedef POD::TBuffer<Ch> Buf;
-		static const int Qgram_Size = (1 << 16) / (8 * sizeof(unsigned int));
+		static const int Qgram_Size = (1 << 16) / (8 * sizeof(e_uint));
 		
 #define GRAMSET(cell, idx, ptr) ((cell[idx*Qgram_Size + (((unsigned int)(*(ushort*)(ptr)))>>5)]) |= (1 << ((*(ushort*)(ptr))&0x1f)))
 #define GRAMGET(cell, idx, ptr) ((cell[idx*Qgram_Size + (((unsigned int)(*(ushort*)(ptr)))>>5)]) &  (1 << ((*(ushort*)(ptr))&0x1f)))
@@ -287,7 +287,7 @@ namespace Search {
 		
 		~MultiPattern() {
 			if (heapTable) {
-				std::cout << "DEALLOC!!!!"<< std::endl;
+				delete [] heapTable;
 			}
 		}
 		
