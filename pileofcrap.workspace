@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <CodeLite_Workspace Name="pileofcrap" Database="./pileofcrap.tags">
-  <Project Name="tests" Path="tests.project" Active="No"/>
+  <Project Name="tests" Path="tests.project" Active="Yes"/>
   <Project Name="gtest" Path="gtest/gtest.project"/>
-  <Project Name="speedtest" Path="speedtest.project" Active="Yes"/>
+  <Project Name="speedtest" Path="speedtest.project" Active="No"/>
   <BuildMatrix>
     <WorkspaceConfiguration Name="Debug" Selected="yes">
       <Project Name="tests" ConfigName="Debug"/>

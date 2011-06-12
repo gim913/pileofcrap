@@ -29,9 +29,14 @@ template <class U> struct UnConst<const U&> {
  * The goal is to have at least three things here
  * - simple pattern search (BM)
  * - pattern search with '.' wildcard
- * - multi pattern search (probably Wu-Manbar)
+ * - multi pattern search
  * 
  * and maybe also multipattern with '.' wildcard
+ * 
+ * The algorithm were selected to have low memory footprint in common applications
+ * 
+ * (usually short patterns < 100 bytes,
+ *  in case of multipattern, small number of patterns, below 100)
  */
 namespace Search {
 	
@@ -46,14 +51,15 @@ namespace Search {
 	public:
 		static const char Template_Arg_Limit[sizeof(Ch) > 2 ? -1 : 0];
 		static const size_t Bad_Char_Len = 1 << (sizeof(Ch)*8);
+		static const size_t Pattern_Stack_Limit = 100;
 		typedef POD::TBuffer<Ch> Buf;
 		
-		Pattern(const Buf& pattern) : pattern(pattern), goodShift(0) {
+		Pattern(const Buf& pattern) : pattern(pattern), heapShift(0), goodShift(0) {
 			init();
 		}
 		
 		~Pattern() {
-			delete [] goodShift;
+			delete [] heapShift;
 		}
 		
 		void reset(const Buf& _pattern) {
@@ -91,8 +97,9 @@ namespace Search {
 			const int m = pattern.len;
 			const int last = m - 1;
 			
-			if (goodShift)
-				delete [] goodShift;
+			if (heapShift) {
+				delete [] heapShift;
+			}
 
 			for(size_t i = 0; i < Bad_Char_Len; ++i) {
 				badChar[i] = 1;
@@ -104,7 +111,13 @@ namespace Search {
 			
 			// this will temporarily hold length
 			// of a match with a suffix of a pattern
-			int* suffixes = new int[m];
+			int* suffixes;
+			if (m > Pattern_Stack_Limit) {
+				suffixes = new int[m];
+				
+			} else {
+				suffixes = stackShift + Pattern_Stack_Limit;
+			}
 			suffixes[m - 1] = m;
 			int matchEnd, matchBegin = last;
 			for (int i = m - 2; i >= 0; --i) {
@@ -124,7 +137,14 @@ namespace Search {
 			}
 			
 			
-			goodShift = new int[m];
+			if (m > Pattern_Stack_Limit) {
+				heapShift = new int[m];
+				goodShift = heapShift;
+				
+			} else {
+				goodShift = stackShift;
+			}
+			
 			for(size_t i = 0; i < m; ++i) {
 				goodShift[i] = m;
 			}
@@ -146,13 +166,17 @@ namespace Search {
 				goodShift[last - suffixes[i]] = last - i;
 			}
 			
-			delete [] suffixes;
+			if (suffixes != stackShift + Pattern_Stack_Limit) {
+				delete [] suffixes;
+			}
 		}
 		
 	private:
 		Buf pattern;
 		int badChar[Bad_Char_Len];
 		int* goodShift;
+		int* heapShift;
+		int stackShift[2*Pattern_Stack_Limit];
 	};
 	
 	
@@ -165,7 +189,7 @@ namespace Search {
 
 	/**
 	 * naive implementation +
-	 * added badChar heuristics from B-M
+	 * added badChar heuristics from Boyer-Moore
 	 */
 	template <class Ch>
 	class PatternDot {
