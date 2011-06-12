@@ -23,6 +23,22 @@ namespace {
 		search.reset(b);
 		ASSERT_EQ(b.ptr, search.getPattern().ptr);
 	}
+
+	TEST(SearchPattern, TestAllocated) {
+		char realBuf[0x1000];
+		
+		e_uint lfsr = 0x123456;
+		for (size_t i = 0; i < sizeof(realBuf); ++i) {
+			lfsr = (lfsr >> 1) ^ (unsigned int)(0 - (lfsr & 1u) & 0xd0000001u);
+			lfsr = (lfsr >> 1) ^ (unsigned int)(0 - (lfsr & 1u) & 0xd0000001u);
+			lfsr = (lfsr >> 1) ^ (unsigned int)(0 - (lfsr & 1u) & 0xd0000001u);
+			realBuf[i] = lfsr & 0xff;
+		}
+		POD::ConstBuffer txt(realBuf, sizeof(realBuf));
+		POD::ConstBuffer p(realBuf + 0xabc, 0x100);
+		POD::ConstBuffer r = Search::pattern(p, txt);
+		ASSERT_EQ((txt.ptr + 0xabc), r.ptr);
+	}
 	
 	struct TestMississippi : public ::testing::Test {
 		TestMississippi() : txt("Mississippi", sizeof("Mississippi")-1) {}
@@ -56,7 +72,7 @@ namespace {
 		POD::ConstBuffer r = Search::pattern(p, txt);
 		ASSERT_EQ( (txt.ptr + 8), r.ptr);
 	}
-
+	
 	// ===== ===== ===== Search::PatternDot TESTS ===== ===== ===== 
 
 	TEST(SearchDotPattern, TestSelf) {

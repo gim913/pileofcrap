@@ -24,6 +24,10 @@ template <class U> struct UnConst<const U&> {
 	typedef U& Result;
 };
 
+// this is kinda crappy, but will do atm
+template <size_t> struct DummyDoUnsigned { typedef e_uint Result; };
+template <> struct DummyDoUnsigned<1> { typedef e_ubyte Result; };
+template <> struct DummyDoUnsigned<2> { typedef e_ushort Result; };
 
 /*
  * The goal is to have at least three things here
@@ -52,6 +56,9 @@ namespace Search {
 		static const char Template_Arg_Limit[sizeof(Ch) > 2 ? -1 : 0];
 		static const size_t Bad_Char_Len = 1 << (sizeof(Ch)*8);
 		static const size_t Pattern_Stack_Limit = 100;
+		
+		typedef typename UnConst<Ch>::Result PlainCh;
+		typedef typename DummyDoUnsigned<sizeof(Ch)> ::Result Index;
 		typedef POD::TBuffer<Ch> Buf;
 		
 		Pattern(const Buf& pattern) : pattern(pattern), heapShift(0), goodShift(0) {
@@ -82,7 +89,7 @@ namespace Search {
 					return Buf(hayStack.ptr + i, hayStack.len - i);
 				}
 				int gs = goodShift[j];
-				int bc = badChar[hayStack.ptr[i+j]]+j;
+				int bc = badChar[ static_cast<Index>(hayStack.ptr[i+j]) ]+j;
 				i += std::max(gs, bc);
 			}
 			return Buf(0, 0);
@@ -99,6 +106,7 @@ namespace Search {
 			
 			if (heapShift) {
 				delete [] heapShift;
+				heapShift = 0;
 			}
 
 			for(size_t i = 0; i < Bad_Char_Len; ++i) {
@@ -106,18 +114,20 @@ namespace Search {
 			}
 			
 			for (size_t i = 0; i < last; ++i) {
-				badChar[pattern.ptr[i]] = -i;
+				PlainCh j = pattern.ptr[i];
+				badChar[ static_cast<Index>(j) ] = -i;
 			}
 			
 			// this will temporarily hold length
 			// of a match with a suffix of a pattern
-			int* suffixes;
+			int* suffixes = 0;
 			if (m > Pattern_Stack_Limit) {
 				suffixes = new int[m];
 				
 			} else {
 				suffixes = stackShift + Pattern_Stack_Limit;
 			}
+			
 			suffixes[m - 1] = m;
 			int matchEnd, matchBegin = last;
 			for (int i = m - 2; i >= 0; --i) {
@@ -135,7 +145,6 @@ namespace Search {
 					suffixes[i] = matchEnd - matchBegin;
 				}
 			}
-			
 			
 			if (m > Pattern_Stack_Limit) {
 				heapShift = new int[m];
