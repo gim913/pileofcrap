@@ -39,7 +39,8 @@ namespace POD {
 	template <class Ch>
 	struct TBuffer
 	{
-		TBuffer(const TBuffer& oth) : ptr(oth.ptr), len(oth.len) {}
+		// default copy ctor will do
+		//TBuffer(const TBuffer& oth) : ptr(oth.ptr), len(oth.len) {}
 		TBuffer(Ch* ptr, size_t len) : ptr(ptr), len(len) {}
 		
 		template <size_t S>

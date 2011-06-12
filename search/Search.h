@@ -310,8 +310,8 @@ namespace Search {
 		typedef POD::TBuffer<Ch> Buf;
 		static const int Qgram_Size = (1 << 16) / (8 * sizeof(e_uint));
 		
-#define GRAMSET(cell, idx, ptr) ((cell[idx*Qgram_Size + (((unsigned int)(*(ushort*)(ptr)))>>5)]) |= (1 << ((*(ushort*)(ptr))&0x1f)))
-#define GRAMGET(cell, idx, ptr) ((cell[idx*Qgram_Size + (((unsigned int)(*(ushort*)(ptr)))>>5)]) &  (1 << ((*(ushort*)(ptr))&0x1f)))
+#define GRAMSET(cell, idx, ptr) ((cell[idx*Qgram_Size + (((unsigned int)(*(e_ushort*)(ptr)))>>5)]) |= (1 << ((*(e_ushort*)(ptr))&0x1f)))
+#define GRAMGET(cell, idx, ptr) ((cell[idx*Qgram_Size + (((unsigned int)(*(e_ushort*)(ptr)))>>5)]) &  (1 << ((*(e_ushort*)(ptr))&0x1f)))
 
 		// remember that members are initialized in order
 		// they are in the class and not in the order of initialization list

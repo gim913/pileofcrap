@@ -4,6 +4,8 @@
 #include <gtest/gtest.h>
 
 namespace {
+	#define _countof(x) (sizeof(x)/sizeof(*x))
+	
 	TEST(BufferTest, TestLen) {
 		ASSERT_EQ(POD::ConstBuffer("foobar", 7).len, 7);
 	}
@@ -25,13 +27,23 @@ namespace {
 	}
 
 	TEST(SearchPattern, TestAllocated) {
+		// this test probably isn't correct because, the user
+		// should rather use e_ubyte and POD::Buffer<const e_ubyte>
+		// but I assume people are lazy, and will most probably do
+		// stuff like:
+		// POD::ConstBuffer pattern("foo\xcd", 4)
+		// so the code should handle such cases
+		//
+		// Probably the best idea would be if POD::Buffer, would
+		// always keep 'unsigned' .ptr, but I don't think it's
+		// a proper solution
 		char realBuf[0x1000];
 
 		e_uint lfsr = 0x123456;
 		for (size_t i = 0; i < sizeof(realBuf); ++i) {
-			lfsr = (lfsr >> 1) ^ (unsigned int)(0 - (lfsr & 1u) & 0xd0000001u);
-			lfsr = (lfsr >> 1) ^ (unsigned int)(0 - (lfsr & 1u) & 0xd0000001u);
-			lfsr = (lfsr >> 1) ^ (unsigned int)(0 - (lfsr & 1u) & 0xd0000001u);
+			lfsr = (lfsr >> 1) ^ (e_uint)(0 - (lfsr & 1u) & 0xd0000001u);
+			lfsr = (lfsr >> 1) ^ (e_uint)(0 - (lfsr & 1u) & 0xd0000001u);
+			lfsr = (lfsr >> 1) ^ (e_uint)(0 - (lfsr & 1u) & 0xd0000001u);
 			realBuf[i] = lfsr & 0xff;
 		}
 		
@@ -43,6 +55,15 @@ namespace {
 		// 'o' occures few times, but shouldn't cause problem
 		POD::ConstBuffer r2 = Search::patternDot(p, 'o', txt);
 		ASSERT_EQ((txt.ptr + 0xabc), r2.ptr);
+		
+		const POD::ConstBuffer pats[] = {
+			{ realBuf+0x999, 0x300 },
+			{ realBuf+0x9d0, 0x200 },
+			{ realBuf+0xa00, 0x100 }
+		};
+
+		POD::ConstBuffer r3 = Search::multiPattern(pats, _countof(pats), txt);
+		ASSERT_EQ((txt.ptr + 0x999), r3.ptr);
 	}
 	
 	struct TestMississippi : public ::testing::Test {
@@ -168,7 +189,6 @@ namespace {
 		{ "ssip", 4 }
 	};
 
-#define _countof(x) (sizeof(x)/sizeof(*x))
 	TEST_F(TestMississippiMulti, Test1) {
 		POD::ConstBuffer txt("Mississippi", sizeof("Mississippi")-1);
 		POD::ConstBuffer r = Search::multiPattern(pats, _countof(pats), txt);
@@ -187,6 +207,7 @@ namespace {
 		POD::ConstBuffer r = mp.search(txt);
 		ASSERT_EQ(txt.ptr+5, r.ptr);
 	}
+
 }
 
 int main(int argc, char **argv) {
