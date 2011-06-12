@@ -58,6 +58,8 @@ namespace Search {
 		static const size_t Pattern_Stack_Limit = 100;
 		
 		typedef typename UnConst<Ch>::Result PlainCh;
+		// doing static_cast to Index later probably isn't
+		// best idea in the world ;p
 		typedef typename DummyDoUnsigned<sizeof(Ch)> ::Result Index;
 		typedef POD::TBuffer<Ch> Buf;
 		
@@ -205,6 +207,9 @@ namespace Search {
 	public:
 		static const size_t Bad_Char_Len = 1 << (sizeof(Ch)*8);
 		typedef typename UnConst<Ch>::Result PlainCh;
+		// doing static_cast to Index later probably isn't
+		// best idea in the world ;p
+		typedef typename DummyDoUnsigned<sizeof(Ch)>::Result Index;
 		typedef POD::TBuffer<Ch> Buf;
 
 		/// decide if the ctor should take Buf + dot
@@ -234,7 +239,7 @@ namespace Search {
 				if (j < 0) {
 					return Buf(hayStack.ptr + i, hayStack.len - i);
 				}
-				i += std::max(1, badChar[hayStack.ptr[i+j]]+j);
+				i += std::max(1, badChar[ static_cast<Index>(hayStack.ptr[i+j]) ]+j);
 			}
 			return Buf(0, 0);
 		}
@@ -263,8 +268,9 @@ namespace Search {
 			// i must be int due to the comparison below
 			for (int i = 0; i < last; ++i) {
 				if (pattern.ptr[i] != dot) {
-					if (-i < badChar[pattern.ptr[i]])
-						badChar[pattern.ptr[i]] = -i;
+					Index j = static_cast<Index>(pattern.ptr[i]);
+					if (-i < badChar[j])
+						badChar[j] = -i;
 				}
 			}
 			
