@@ -1,15 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <CodeLite_Workspace Name="pileofcrap" Database="./pileofcrap.tags">
-  <Project Name="tests" Path="tests.project" Active="Yes"/>
+  <Project Name="tests" Path="tests.project" Active="No"/>
   <Project Name="gtest" Path="gtest/gtest.project"/>
+  <Project Name="speedtest" Path="speedtest.project" Active="Yes"/>
   <BuildMatrix>
     <WorkspaceConfiguration Name="Debug" Selected="yes">
       <Project Name="tests" ConfigName="Debug"/>
       <Project Name="gtest" ConfigName="Debug"/>
+      <Project Name="speedtest" ConfigName="Debug"/>
     </WorkspaceConfiguration>
     <WorkspaceConfiguration Name="Release" Selected="yes">
       <Project Name="tests" ConfigName="Release"/>
       <Project Name="gtest" ConfigName="Release"/>
+      <Project Name="speedtest" ConfigName="Release"/>
     </WorkspaceConfiguration>
   </BuildMatrix>
 </CodeLite_Workspace>
