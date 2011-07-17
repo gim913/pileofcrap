@@ -409,6 +409,32 @@ namespace Search {
 		MultiPattern<Ch> mp(patterns, patternsCount);
 		return mp.search(hayStack);
 	}
+
+	template <class Ch, size_t Qgrams_Count = 7>
+	class MultiPatternDot {
+		typedef POD::TBuffer<Ch> Buf;
+		typedef typename UnConst<Ch>::Result PlainCh;
+		
+	public:
+		// maybe it's not the wisest idea to get only one dot for all patterns
+		// but in most cases it should do the work
+		MultiPatternDot(const Buf* patterns, size_t patternsCount, PlainCh dot) :
+				patterns(patterns),
+				patternsCount(patternsCount),
+				dot(dot)
+		{
+			//init();
+		}
+		
+		~MultiPatternDot() {
+		}
+		
+	private:
+		const Buf* patterns;
+		size_t patternsCount;
+		PlainCh dot;
+		size_t minPattern;
+	};
 }
 
 #endif /* GIM_SEARCH_SEARCH_H */
