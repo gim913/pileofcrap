@@ -49,6 +49,11 @@ namespace Search {
 	 * 
 	 * Currently badChar is done naively, so it's sensible
 	 * to instantiate this tamplate only with char or wchar
+	 * 
+	 * memory usage:
+	 *   [stack] ints 2^(no_of_bits(Ch)) - bad character table
+	 *   [stack] ints 2*Pattern_Stack_Limit - good suffix table
+	 *   [heap]  ints n - if pattern len > Pattern_Stack_Limit
 	 */
 	template <class Ch>
 	class Pattern {
@@ -201,6 +206,9 @@ namespace Search {
 	/**
 	 * naive implementation +
 	 * added badChar heuristics from Boyer-Moore
+	 * 
+	 * memory usage:
+	 *   [stack] ints 2^(no_of_bits(Ch)) - bad character table
 	 */
 	template <class Ch>
 	class PatternDot {
@@ -303,6 +311,10 @@ namespace Search {
 	 * if Qgrams_Count is <= 7, qgrams will be stored in
 	 * statically allocated memory, otherwise memory for
 	 * will qgrams will be dynamically allocated
+	 * 
+	 * memory usage:
+	 *   [stack or heap] ints Qgram_Size*Qgram_Count - qgrams array
+	 *   memory allocated on the heap if template argument Qgram_Count is > 7
 	 */
 	template <class Ch, size_t Qgrams_Count = 7>
 	class MultiPattern {
@@ -414,11 +426,19 @@ namespace Search {
 	/*
 	 * I want to base this one on Shift-Or + Qgrams
 	 * 
+	 * The worst thing one can do is to add pattern
+	 * consisting of only DOTs to the pattern list
+	 * in that case this will behave terribly bad
+	 * 
+	 * memory usage:
+	 *   [stack] ints Qgram_Size * Qgram_Count - qgram table
 	 */
 	template <class Ch, size_t Qgrams_Count = 7>
 	class MultiPatternDot {
 		typedef POD::TBuffer<Ch> Buf;
 		typedef typename UnConst<Ch>::Result PlainCh;
+		
+		static const char Template_Arg_Limit[Qgrams_Count > 7 ? -1 : 1];
 		// Number of e_uint's that are needed to keep 256*256 bits
 		static const int Qgram_Size = (1 << 16) / (8 * sizeof(e_uint));
 
@@ -443,6 +463,15 @@ namespace Search {
 		Buf search(const Buf& hayStack) {
 			if (!initialized)
 				return Buf(0, 0);
+			
+			if (hayStack.len < minPattern)
+				return Buf(0, 0);
+			
+			e_ubyte bitTable[Qgram_Size];
+			for (size_t i = 0; i < minPattern - 1; ++i) {
+				
+			}
+			// first pre-compute
 			
 			return Buf(0, 0);
 		}
