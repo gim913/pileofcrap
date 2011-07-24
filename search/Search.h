@@ -434,7 +434,7 @@ namespace Search {
 				dot(dot),
 				gramTable(Qgrams_Count > 7 ? 0 : stackTable)
 		{
-			//init();
+			init();
 		}
 		
 		~MultiPatternDot() {
@@ -456,6 +456,9 @@ namespace Search {
 				if (patterns[i].len < minPattern)
 					minPattern = patterns[i].len;
 			}
+			
+			std::cout << "initializing" << std::endl;
+			
 			initialized = false;
 			if (minPattern <= 1) {
 				return;
@@ -485,20 +488,25 @@ namespace Search {
 						case 2:
 							{
 								// or if you preffer 'character >> 3'
-								size_t pp = patterns[i].ptr[j+1] / (Qgrams_Count / 256);
-								gramTable[j*Qgrams_Count + pp + 0] = -1;
-								gramTable[j*Qgrams_Count + pp + 1] = -1;
-								gramTable[j*Qgrams_Count + pp + 2] = -1;
-								gramTable[j*Qgrams_Count + pp + 3] = -1;
-								gramTable[j*Qgrams_Count + pp + 4] = -1;
-								gramTable[j*Qgrams_Count + pp + 5] = -1;
-								gramTable[j*Qgrams_Count + pp + 6] = -1;
-								gramTable[j*Qgrams_Count + pp + 7] = -1;
+								size_t pp = patterns[i].ptr[j+1] / (Qgram_Size / 256);
+								gramTable[j*Qgram_Size + pp + 0] = -1;
+								gramTable[j*Qgram_Size + pp + 1] = -1;
+								gramTable[j*Qgram_Size + pp + 2] = -1;
+								gramTable[j*Qgram_Size + pp + 3] = -1;
+								gramTable[j*Qgram_Size + pp + 4] = -1;
+								gramTable[j*Qgram_Size + pp + 5] = -1;
+								gramTable[j*Qgram_Size + pp + 6] = -1;
+								gramTable[j*Qgram_Size + pp + 7] = -1;
 							}
 							break;
 							
 						case 1:
-							
+							{
+								size_t mask = (1 << ((patterns[i].ptr[j])&0x1f));
+								for (size_t k = ((unsigned int)(patterns[i].ptr[j])) >> 5; k < Qgram_Size; k += (Qgram_Size / 256)) {
+									gramTable[j*Qgram_Size + k] |= mask;
+								}
+							}
 							break;
 							
 						default:

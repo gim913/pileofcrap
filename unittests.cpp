@@ -5,7 +5,7 @@
 
 namespace {
 	#define _countof(x) (sizeof(x)/sizeof(*x))
-	
+
 	TEST(BufferTest, TestLen) {
 		ASSERT_EQ(POD::ConstBuffer("foobar", 7).len, 7);
 	}
@@ -207,7 +207,6 @@ namespace {
 		POD::ConstBuffer r = mp.search(txt);
 		ASSERT_EQ(txt.ptr+5, r.ptr);
 	}
-
 	// more tests for multipattern should be added
 	
 	struct TestMississippiMultiDot : public ::testing::Test {
