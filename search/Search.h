@@ -429,6 +429,9 @@ namespace Search {
 		~MultiPatternDot() {
 		}
 		
+		Buf search(const Buf& hayStack) {
+			return Buf(0, 0);
+		}
 	private:
 		const Buf* patterns;
 		size_t patternsCount;

@@ -208,6 +208,37 @@ namespace {
 		ASSERT_EQ(txt.ptr+5, r.ptr);
 	}
 
+	// more tests for multipattern should be added
+	
+	struct TestMississippiMultiDot : public ::testing::Test {
+		TestMississippiMultiDot() {}
+		static const POD::ConstBuffer pats[3];
+	};
+	
+	const POD::ConstBuffer TestMississippiMultiDot::pats[] = {
+		{ "s.s", 3 },
+		{ "s.p", 3 },
+		{ "i.p", 3 }
+	};
+	
+	TEST_F(TestMississippiMultiDot, Test1) {
+		POD::ConstBuffer txt1("Mississippi", sizeof("Mississippi")-1);
+		Search::MultiPatternDot<const char> mpd(pats, _countof(pats), '.');
+		POD::ConstBuffer r1 = mpd.search(txt1);
+		ASSERT_EQ(txt1.ptr + 3, r1.ptr);
+	}
+	TEST_F(TestMississippiMultiDot, Test2) {
+		POD::ConstBuffer txt2("MisXissippi", sizeof("MisXissippi")-1);
+		Search::MultiPatternDot<const char> mpd(pats, _countof(pats), '.');
+		POD::ConstBuffer r2 = mpd.search(txt2);
+		ASSERT_EQ(txt2.ptr + 6, r2.ptr);
+	}
+	TEST_F(TestMississippiMultiDot, Test3) {
+		POD::ConstBuffer txt3("MisXisXippi", sizeof("MisXisXippi")-1);
+		Search::MultiPatternDot<const char> mpd(pats, _countof(pats), '.');
+		POD::ConstBuffer r3 = mpd.search(txt3);
+		ASSERT_EQ(txt3.ptr + 7, r3.ptr);
+	}
 }
 
 int main(int argc, char **argv) {
