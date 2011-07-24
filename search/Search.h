@@ -308,8 +308,9 @@ namespace Search {
 	class MultiPattern {
 	public:
 		typedef POD::TBuffer<Ch> Buf;
+		// Number of e_uint's that are needed to keep 256*256 bits
 		static const int Qgram_Size = (1 << 16) / (8 * sizeof(e_uint));
-		
+
 #define GRAMSET(cell, idx, ptr) ((cell[idx*Qgram_Size + (((unsigned int)(*(e_ushort*)(ptr)))>>5)]) |= (1 << ((*(e_ushort*)(ptr))&0x1f)))
 #define GRAMGET(cell, idx, ptr) ((cell[idx*Qgram_Size + (((unsigned int)(*(e_ushort*)(ptr)))>>5)]) &  (1 << ((*(e_ushort*)(ptr))&0x1f)))
 
@@ -410,10 +411,19 @@ namespace Search {
 		return mp.search(hayStack);
 	}
 
+	/*
+	 * I want to base this one on Shift-Or + Qgrams
+	 * 
+	 */
 	template <class Ch, size_t Qgrams_Count = 7>
 	class MultiPatternDot {
 		typedef POD::TBuffer<Ch> Buf;
 		typedef typename UnConst<Ch>::Result PlainCh;
+		// Number of e_uint's that are needed to keep 256*256 bits
+		static const int Qgram_Size = (1 << 16) / (8 * sizeof(e_uint));
+
+#define GRAMSET(cell, idx, ptr) ((cell[idx*Qgram_Size + (((unsigned int)(*(e_ushort*)(ptr)))>>5)]) |= (1 << ((*(e_ushort*)(ptr))&0x1f)))
+#define GRAMGET(cell, idx, ptr) ((cell[idx*Qgram_Size + (((unsigned int)(*(e_ushort*)(ptr)))>>5)]) &  (1 << ((*(e_ushort*)(ptr))&0x1f)))
 		
 	public:
 		// maybe it's not the wisest idea to get only one dot for all patterns
@@ -430,13 +440,47 @@ namespace Search {
 		}
 		
 		Buf search(const Buf& hayStack) {
+			if (!initialized)
+				return Buf(0, 0);
+			
 			return Buf(0, 0);
 		}
+		
+	protected:
+		void init() {
+			minPattern = Qgrams_Count + 1;
+			
+			// find shortest pattern
+			for (size_t i = 0; i < patternsCount; ++i) {
+				if (patterns[i].len < minPattern)
+					minPattern = patterns[i].len;
+			}
+			initialized = false;
+			if (minPattern <= 1) {
+				return;
+			}
+
+			memset (gramTable, 0, sizeof(gramTable));
+			
+			for (size_t i = 0; i < patternsCount; ++i) {
+				for (size_t j = 0; j < minPattern - 1; ++j) {
+				}
+			}
+			initialized = true;
+		}
+		
 	private:
 		const Buf* patterns;
 		size_t patternsCount;
 		PlainCh dot;
 		size_t minPattern;
+		
+		e_uint stackTable[Qgrams_Count <= 7 ? (Qgrams_Count * Qgram_Size) : 1];
+		e_uint *gramTable;
+		bool initialized;
+
+#undef GRAMSET
+#undef GRAMGET
 	};
 }
 
