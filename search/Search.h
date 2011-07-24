@@ -478,10 +478,27 @@ namespace Search {
 							break;
 						
 						// those two are endian-dependent...
+						// I hope I won't swap them ;]
+						// this one is for ushorts: 0xPP00, 0xPP01, 0xPP02, .. 0xPPFF
+						// instead of doing the loop, I'll write unrolled version
+						// (cause it's only 2^3 == 8 statements)
 						case 2:
+							{
+								// or if you preffer 'character >> 3'
+								size_t pp = patterns[i].ptr[j+1] / (Qgrams_Count / 256);
+								gramTable[j*Qgrams_Count + pp + 0] = -1;
+								gramTable[j*Qgrams_Count + pp + 1] = -1;
+								gramTable[j*Qgrams_Count + pp + 2] = -1;
+								gramTable[j*Qgrams_Count + pp + 3] = -1;
+								gramTable[j*Qgrams_Count + pp + 4] = -1;
+								gramTable[j*Qgrams_Count + pp + 5] = -1;
+								gramTable[j*Qgrams_Count + pp + 6] = -1;
+								gramTable[j*Qgrams_Count + pp + 7] = -1;
+							}
 							break;
 							
 						case 1:
+							
 							break;
 							
 						default:
