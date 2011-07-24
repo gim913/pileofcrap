@@ -431,7 +431,8 @@ namespace Search {
 		MultiPatternDot(const Buf* patterns, size_t patternsCount, PlainCh dot) :
 				patterns(patterns),
 				patternsCount(patternsCount),
-				dot(dot)
+				dot(dot),
+				gramTable(Qgrams_Count > 7 ? 0 : stackTable)
 		{
 			//init();
 		}
@@ -461,9 +462,32 @@ namespace Search {
 			}
 
 			memset (gramTable, 0, sizeof(gramTable));
-			
 			for (size_t i = 0; i < patternsCount; ++i) {
 				for (size_t j = 0; j < minPattern - 1; ++j) {
+					int state = 0;
+					state += !!(patterns[i].ptr[j+1] == dot);
+					state += (!!(patterns[i].ptr[j] == dot)) << 1;
+					
+					switch (state) {
+						case 3:
+							// if there are two dots one after another
+							// we need to fill all the bits in gram table
+							// for current index ''j''
+							for (size_t k = 0; k < Qgram_Size; ++k)
+								gramTable[j*Qgram_Size + k] = -1;
+							break;
+						
+						// those two are endian-dependent...
+						case 2:
+							break;
+							
+						case 1:
+							break;
+							
+						default:
+							GRAMSET(gramTable, j, patterns[i].ptr + j);
+							break;
+					}
 				}
 			}
 			initialized = true;
