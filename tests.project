@@ -84,4 +84,7 @@
   <VirtualDirectory Name="Search">
     <File Name="search/Search.h"/>
   </VirtualDirectory>
+  <VirtualDirectory Name="Format">
+    <File Name="format/Format.h"/>
+  </VirtualDirectory>
 </CodeLite_Project>
