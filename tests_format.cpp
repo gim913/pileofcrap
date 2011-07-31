@@ -21,6 +21,22 @@ namespace {
 		char *p = x.format(POD::Buffer(foo, sizeof(foo)));
 		ASSERT_STREQ(p, "xxy zz{v");
 	}
+	
+	TEST(FormatSimple, Test3) {
+		char foo[] = "xxy{123";
+		Format x;
+		
+		char *p = x.format(POD::Buffer(foo, sizeof(foo)));
+		ASSERT_STREQ(p, "xxy");
+	}
+	
+	TEST(FormatSimple, Test4) {
+		char foo[] = "xxy{,-123";
+		Format x;
+		
+		char *p = x.format(POD::Buffer(foo, sizeof(foo)));
+		ASSERT_STREQ(p, "xxy");
+	}
 }
 
 int runFormatTests()

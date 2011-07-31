@@ -34,6 +34,7 @@ struct FormatB {
 	}
 	
 	char* format(const POD::Buffer& format) {
+		#define CHECK_END ({if (p == end) { break; }})
 		Ch* p = format.ptr;
 		Ch* end = p + format.len;
 		Ch* last = p;
@@ -47,11 +48,12 @@ struct FormatB {
 			// emit fragment
 			len += eat(POD::Buffer(last, p-last));
 			
-			if (p == end) { break; }
+			CHECK_END;
 			
 			// skip '{'
-			
 			p++;
+			CHECK_END;
+			
 			// check 'escaped' brace
 			if (*p == '{') {
 				last = p;
@@ -61,28 +63,50 @@ struct FormatB {
 			
 			// calculate index
 			int index = 0;
-			bool hasIndex = false;
+			bool indexPresent = false;
 			if (*p >= '0' && *p <= '9') {
-				hasIndex = true;
-				while (*p >= '0' && *p <= '9') {
-					index = 10*index + (*p - '0');
+				indexPresent = true;
+				while (p < end && *p >= '0' && *p <= '9') {
+					index = 10*index + (*p++ - '0');
 				}
+				CHECK_END;
 			}
 			
 			// ok check the alignment
+			int alignment = 0;
+			bool alignmentSign = false;
+			bool alignmentPresent = false;
 			if (*p == ',') {
+				alignmentPresent = true;
 				p++;
+				CHECK_END;
+				
+				if (*p == '-' || *p == '+') {
+					p++;
+					CHECK_END;
+					if (*p=='-') alignmentSign = true;
+				}
+				if (p < end && *p >= '0' && *p <= '9') {
+					while (*p >= '0' && *p <= '9') {
+						alignment = 10*alignment + (*p++ - '0');
+					}
+				}
+				if (alignmentSign) alignment *= -1;
+				CHECK_END;
 			}
 			
 			// ok check format string
 			if (*p == ':') {
 				p++;
+				CHECK_END;
 			}
 			
 			if (*p == '}') {
 				p++;
-				last = p;
+				CHECK_END;
 			}
+			
+			last = p;
 		}
 		return dataBuf;
 	}
