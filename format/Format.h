@@ -7,6 +7,8 @@
 #ifndef GIM_FORMAT_FORMAT_H
 #define GIM_FORMAT_FORMAT_H
 
+#include <iostream>
+
 #include "../types.h"
 
 template <size_t Buf_Size = 1024>
@@ -47,8 +49,15 @@ struct FormatB {
 			
 			if (p == end) { break; }
 			
-			// pass '{'
-			++p;
+			// skip '{'
+			
+			p++;
+			// check 'escaped' brace
+			if (*p == '{') {
+				last = p;
+				p++; // skip the '{{'
+				continue;
+			}
 			
 			// calculate index
 			int index = 0;
@@ -58,6 +67,16 @@ struct FormatB {
 				while (*p >= '0' && *p <= '9') {
 					index = 10*index + (*p - '0');
 				}
+			}
+			
+			// ok check the alignment
+			if (*p == ',') {
+				p++;
+			}
+			
+			// ok check format string
+			if (*p == ':') {
+				p++;
 			}
 			
 			if (*p == '}') {
