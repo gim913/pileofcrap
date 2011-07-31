@@ -82,9 +82,9 @@ struct FormatB {
 				CHECK_END;
 				
 				if (*p == '-' || *p == '+') {
+					if (*p=='-') alignmentSign = true;
 					p++;
 					CHECK_END;
-					if (*p=='-') alignmentSign = true;
 				}
 				if (p < end && *p >= '0' && *p <= '9') {
 					while (*p >= '0' && *p <= '9') {
