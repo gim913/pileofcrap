@@ -22,7 +22,7 @@ struct FormatB {
 		pos = 0;
 	}
 	
-	size_t eat(const POD::Buffer& buf) {
+	size_t eat(const POD::ConstBuffer& buf) {
 		// space left
 		size_t toWrite = Buf_Size-1 - pos;
 		if (buf.len < toWrite) {
@@ -33,11 +33,11 @@ struct FormatB {
 		pos += toWrite;
 	}
 	
-	char* format(const POD::Buffer& format) {
+	char* format(const POD::ConstBuffer& format) {
 		#define CHECK_END ({if (p == end) { break; }})
-		Ch* p = format.ptr;
-		Ch* end = p + format.len;
-		Ch* last = p;
+		const Ch* p = format.ptr;
+		const Ch* end = p + format.len;
+		const Ch* last = p;
 		int len = 0;
 		
 		while (true) {
@@ -46,7 +46,7 @@ struct FormatB {
 			}
 			
 			// emit fragment
-			len += eat(POD::Buffer(last, p-last));
+			len += eat(POD::ConstBuffer(last, p-last));
 			
 			CHECK_END;
 			
@@ -99,9 +99,16 @@ struct FormatB {
 			if (*p == ':') {
 				p++;
 				CHECK_END;
+				
+				while (p < end && *p != '}') {
+					p++;
+				}
 			}
 			
-			if (*p == '}') {
+			if (*p != '}') {
+				len += eat(POD::ConstBuffer("{badformat}", 11));
+				
+			} else {
 				p++;
 				CHECK_END;
 			}

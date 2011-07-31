@@ -39,6 +39,12 @@ namespace POD {
 	template <class Ch>
 	struct TBuffer
 	{
+		// this should allow conversion from Buffer -> ConstBuffer, but
+		// a) not in the other direction,
+		// b) shouldn't allow other conversions (like TBuffer<uint> -> TBuffer<char>)
+		template <class Ch2>
+		TBuffer(const TBuffer<Ch2>& oth) : ptr(oth.ptr), len(oth.len) {}
+		
 		// default copy ctor will do
 		//TBuffer(const TBuffer& oth) : ptr(oth.ptr), len(oth.len) {}
 		TBuffer(Ch* ptr, size_t len) : ptr(ptr), len(len) {}
