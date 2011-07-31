@@ -6,36 +6,29 @@
 namespace {
 	#define STR(x) x, sizeof(x)
 	
-	TEST(FormatSimple, Test1) {
-		char foo[] = "xxy{} {}zzv";
+	struct FormatSimple : public ::testing::Test {
+		FormatSimple() {}
 		Format x;
-		
-		char *p = x.format(POD::Buffer(foo, sizeof(foo)));
+	};
+	
+	TEST_F(FormatSimple, Test1) {
+		char *p = x.format(POD::ConstBuffer("xxy{} {}zzv"));
 		ASSERT_STREQ(p, "xxy zzv");
 	}
 	
-	TEST(FormatSimple, Test2) {
-		char foo[] = "xxy{} {}zz{{v";
-		Format x;
-		
-		char *p = x.format(POD::Buffer(foo, sizeof(foo)));
+	TEST_F(FormatSimple, Test2) {
+		char *p = x.format(POD::ConstBuffer("xxy{} {}zz{{v"));
 		ASSERT_STREQ(p, "xxy zz{v");
 	}
 	
-	TEST(FormatSimple, Test3) {
-		char foo[] = "xxy{123";
-		Format x;
-		
-		char *p = x.format(POD::Buffer(foo, sizeof(foo)));
-		ASSERT_STREQ(p, "xxy");
+	TEST_F(FormatSimple, Test3) {
+		char *p = x.format(POD::ConstBuffer("xxy{123"));
+		ASSERT_STREQ(p, "xxy{badformat}");
 	}
 	
-	TEST(FormatSimple, Test4) {
-		char foo[] = "xxy{,-123";
-		Format x;
-		
-		char *p = x.format(POD::Buffer(foo, sizeof(foo)));
-		ASSERT_STREQ(p, "xxy");
+	TEST_F(FormatSimple, Test4) {
+		char *p = x.format(POD::ConstBuffer("xxy{,-123"));
+		ASSERT_STREQ(p, "xxy{badformat}");
 	}
 }
 

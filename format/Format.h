@@ -18,8 +18,6 @@ struct FormatB {
 	typedef char Ch;
 	
 	FormatB() {
-		dataBuf[0] = dataBuf[Buf_Size-1] = 0;
-		pos = 0;
 	}
 	
 	size_t eat(const POD::ConstBuffer& buf) {
@@ -39,6 +37,9 @@ struct FormatB {
 		const Ch* end = p + format.len;
 		const Ch* last = p;
 		int len = 0;
+		
+		dataBuf[0] = dataBuf[Buf_Size-1] = 0;
+		pos = 0;
 		
 		while (true) {
 			while (p < end && *p != '{') {
