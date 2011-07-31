@@ -5,7 +5,7 @@
   <VirtualDirectory Name="src">
     <File Name="types.h"/>
     <File Name="main.cpp"/>
-    <File Name="tests_search.cpp"/>
+    <File Name="tests_format.cpp"/>
   </VirtualDirectory>
   <Dependencies Name="Debug">
     <Project Name="gtest"/>
