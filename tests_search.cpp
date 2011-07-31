@@ -1,5 +1,4 @@
 #include "search/Search.h"
-#include "format/Format.h"
 #include "types.h"
 
 #include <gtest/gtest.h>
@@ -241,15 +240,7 @@ namespace {
 	}
 }
 
-int main(int argc, char **argv) {
-  //::testing::InitGoogleTest(&argc, argv);
-  //return RUN_ALL_TESTS();
-  
-  char foo[] = "xxy{} {}zzv";
-  Format x;
-  
-  // using sizeof() will include trailing 0
-  std::cout << x.format(POD::Buffer(foo, sizeof(foo))) << std::endl;
-  
-  return 1;
+int runSearchTests()
+{
+	return RUN_ALL_TESTS();
 }

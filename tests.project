@@ -4,7 +4,8 @@
   <Dependencies/>
   <VirtualDirectory Name="src">
     <File Name="types.h"/>
-    <File Name="unittests.cpp"/>
+    <File Name="main.cpp"/>
+    <File Name="tests_search.cpp"/>
   </VirtualDirectory>
   <Dependencies Name="Debug">
     <Project Name="gtest"/>
