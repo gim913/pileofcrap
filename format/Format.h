@@ -47,36 +47,60 @@ class FormatB {
 	void print(int x) {
 		print(static_cast<e_ulong>(x));
 	}
-	void print(e_ulong x) {
-		int l=0;
-		
+	
+	struct FormatSpecifier {
+		int mode;
+		bool hexUpper;
+		int maxPrecision;
+	};
+	
+	int parseFormat(FormatSpecifier& ret) {
 		const char *f = currentFormat.ptr;
 		const char *fEnd = currentFormat.ptr + currentFormat.len;
 		
-		int mode = 10;
-		bool hexUpper = false;
-		int maxPrecision = 0;
+		// default mode is decimal
+		ret.mode = 10;
+		ret.hexUpper = false;
+		ret.maxPrecision = 0;
 		if (f && f != fEnd) {
 			switch (*f) {
-				case 'b': case 'B': mode=2; break;
-				case 'o': case 'O': mode=8; break;
-				case 'd': case 'D': mode=10; break;
+				case 'b': case 'B': ret.mode=2; break;
+				case 'o': case 'O': ret.mode=8; break;
+				case 'd': case 'D': ret.mode=10; break;
 				case 'X':
-					hexUpper = true;
-				case 'x': mode=16; break;
+					ret.hexUpper = true;
+				case 'x': ret.mode=16; break;
 				default:
 					eat(POD::ConstBuffer("{badspec}",9));
-					return;
+					return 1;
 			}
 			f++;
 			if (f != fEnd) {
-				while ((*f) >= '0' && (*f) <= '9') { maxPrecision *= 10; maxPrecision += (*f++) - '0'; }
+				while ((*f) >= '0' && (*f) <= '9') {
+					ret.maxPrecision *= 10;
+					ret.maxPrecision += (*f++) - '0';
+				}
 				if (f != fEnd) {
 					eat(POD::ConstBuffer("{badspec}",9));
-					return;
+					return 1;
 				}
 			}
 		}
+		return 0;
+	}
+	
+	void print(e_ulong x) {
+		FormatSpecifier fs;
+		if (parseFormat(fs))
+			return;
+		realPrint(x, fs);
+	}
+	
+	void realPrint(e_ulong x, const FormatSpecifier& fs) {
+		int l=0;
+		int mode = fs.mode;
+		int maxPrecision = fs.maxPrecision;
+		bool hexUpper = fs.hexUpper;
 		
 		// calc len, log could be used, but I want to avoid it
 		{ int t=x; while (t) { l++; t /= mode; } if (!x) l++; }
