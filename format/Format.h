@@ -14,8 +14,12 @@
 template <size_t Buf_Size = 1024>
 class FormatB {
 	char dataBuf[Buf_Size];
-	int pos;
+	int pos; // pos in dataBuf buffer
 	typedef char Ch;
+	const Ch* p;
+	const Ch* end;
+	const Ch* last;
+		
 	
 	// those variables will be needed across different funcs
 	int index;
@@ -40,15 +44,20 @@ class FormatB {
 		pos += toWrite;
 	}
 
-	char* parse(const POD::ConstBuffer& format) {
-		#define CHECK_END ({if (p == end) { break; }})
-		const Ch* p = format.ptr;
-		const Ch* end = p + format.len;
-		const Ch* last = p;
-		int len = 0;
+	char* parse(const POD::ConstBuffer& format, bool lastPass = false) {
+		p = format.ptr;
+		last = p;
+		end = p + format.len;
 		
 		dataBuf[0] = dataBuf[Buf_Size-1] = 0;
 		pos = 0;
+		
+		return parseItem();
+	}
+	
+	char* parseItem(bool lastPass = false) {
+		#define CHECK_END ({if (p == end) { break; }})
+		int len = 0;
 		
 		index = 0;
 		indexPresent = false;
