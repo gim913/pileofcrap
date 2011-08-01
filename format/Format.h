@@ -25,9 +25,9 @@ class FormatB {
 	bool alignmentPresent;
 	POD::ConstBuffer currentFormat;
 	bool needsProcessing;
-			
-	FormatB() {
-	}
+	
+	public:
+	FormatB() : currentFormat(0, 0) {}
 	
 	size_t eat(const POD::ConstBuffer& buf) {
 		// space left
@@ -40,7 +40,7 @@ class FormatB {
 		pos += toWrite;
 	}
 
-	char* format(const POD::ConstBuffer& format) {
+	char* parse(const POD::ConstBuffer& format) {
 		#define CHECK_END ({if (p == end) { break; }})
 		const Ch* p = format.ptr;
 		const Ch* end = p + format.len;
@@ -109,7 +109,7 @@ class FormatB {
 			}
 			
 			// ok check format string
-			char* formatStart = NULL;
+			const char* formatStart = NULL;
 			if (*p == ':') {
 				p++;
 				CHECK_END;
@@ -125,7 +125,7 @@ class FormatB {
 				
 			} else {
 				if (formatStart)
-					format = POD::ConstBuffer(formatStart, p-formatStart);
+					currentFormat = POD::ConstBuffer(formatStart, p-formatStart);
 				needsProcessing = true;
 				p++;
 				CHECK_END;

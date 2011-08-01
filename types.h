@@ -39,11 +39,22 @@ namespace POD {
 	template <class Ch>
 	struct TBuffer
 	{
+		typedef TBuffer<Ch> Buf;
+		
 		// this should allow conversion from Buffer -> ConstBuffer, but
 		// a) not in the other direction,
 		// b) shouldn't allow other conversions (like TBuffer<uint> -> TBuffer<char>)
 		template <class Ch2>
 		TBuffer(const TBuffer<Ch2>& oth) : ptr(oth.ptr), len(oth.len) {}
+		
+		// ATM allow only assigmnet between matching TBuffers
+		Buf& operator=(const Buf& oth) {
+			if (this != &oth) {
+				ptr = oth.ptr;
+				len = oth.len;
+			}
+			return *this;
+		}
 		
 		// default copy ctor will do
 		//TBuffer(const TBuffer& oth) : ptr(oth.ptr), len(oth.len) {}

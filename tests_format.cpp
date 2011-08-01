@@ -12,22 +12,22 @@ namespace {
 	};
 	
 	TEST_F(FormatSimple, Test1) {
-		char *p = x.format(POD::ConstBuffer("xxy{} {}zzv"));
+		char *p = x.parse(POD::ConstBuffer("xxy{} {}zzv"));
 		ASSERT_STREQ(p, "xxy zzv");
 	}
 	
 	TEST_F(FormatSimple, Test2) {
-		char *p = x.format(POD::ConstBuffer("xxy{} {}zz{{v"));
+		char *p = x.parse(POD::ConstBuffer("xxy{} {}zz{{v"));
 		ASSERT_STREQ(p, "xxy zz{v");
 	}
 	
 	TEST_F(FormatSimple, Test3) {
-		char *p = x.format(POD::ConstBuffer("xxy{123"));
+		char *p = x.parse(POD::ConstBuffer("xxy{123"));
 		ASSERT_STREQ(p, "xxy{badformat}");
 	}
 	
 	TEST_F(FormatSimple, Test4) {
-		char *p = x.format(POD::ConstBuffer("xxy{,-123"));
+		char *p = x.parse(POD::ConstBuffer("xxy{,-123"));
 		ASSERT_STREQ(p, "xxy{badformat}");
 	}
 }
