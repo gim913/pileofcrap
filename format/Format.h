@@ -39,20 +39,23 @@ class FormatB {
 		if (buf.len < toWrite) {
 			toWrite = buf.len;
 		}
-		std::cout << "eating... " << buf.len << " " << buf.ptr << std::endl;
+		//std::cout << "eating... " << buf.len << " " << buf.ptr << std::endl;
 		memcpy(dataBuf+pos, buf.ptr, toWrite);
 		pos += toWrite;
 	}
 
 	void print(int x) {
+		print(static_cast<e_ulong>(x));
+	}
+	void print(e_ulong x) {
 		int l=0;
 		
 		const char *f = currentFormat.ptr;
 		const char *fEnd = currentFormat.ptr + currentFormat.len;
 		
-		int mode;
+		int mode = 10;
 		bool hexUpper = false;
-		int maxLen = 0;
+		int maxPrecision = 0;
 		if (f && f != fEnd) {
 			switch (*f) {
 				case 'b': case 'B': mode=2; break;
@@ -60,34 +63,50 @@ class FormatB {
 				case 'd': case 'D': mode=10; break;
 				case 'X':
 					hexUpper = true;
-				          case 'x': mode=16; break;
+				case 'x': mode=16; break;
 				default:
 					eat(POD::ConstBuffer("{badspec}",9));
 					return;
 			}
 			f++;
 			if (f != fEnd) {
-				while ((*f) >= '0' && (*f) <= '9') { maxLen *= 10; maxLen += (*f++) - '0'; }
+				while ((*f) >= '0' && (*f) <= '9') { maxPrecision *= 10; maxPrecision += (*f++) - '0'; }
 				if (f != fEnd) {
 					eat(POD::ConstBuffer("{badspec}",9));
 					return;
 				}
 			}
 		}
-		// calc len
-		{
-			int t=x;
-			while (t) { l++; t /= 10; }
-			if (!x) l++;
+		
+		// calc len, log could be used, but I want to avoid it
+		{ int t=x; while (t) { l++; t /= mode; } if (!x) l++; }
+		
+		if (maxPrecision < l) {
+			maxPrecision = l;
 		}
 		
 		size_t toWrite = Buf_Size-1 - pos;
-		if (l < toWrite) {
-			toWrite = l;
+		if (maxPrecision < toWrite) {
+			toWrite = maxPrecision;
 		}
-		for (; l>0; l--) {
-			dataBuf[pos+l-1] = '0' + (x % 10);
-			x /= 10;
+		
+		if (mode != 16) {
+			for (; maxPrecision>0; maxPrecision--) {
+				dataBuf[pos+maxPrecision-1] = '0' + (x % mode);
+				x /= mode;
+			}
+			
+		} else {
+			for (; maxPrecision>0; maxPrecision--) {
+				int t = (x % mode);
+				if (t>9) {
+					dataBuf[pos+maxPrecision-1] = (hexUpper?'A':'a')+(t-10);
+					
+				} else {
+					dataBuf[pos+maxPrecision-1] = '0' + t;
+				}
+				x /= mode;
+			}
 		}
 		pos += toWrite;
 	}

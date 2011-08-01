@@ -41,6 +41,9 @@ namespace {
 		
 		char *q = x.parse(POD::ConstBuffer("xxy {:d}"), 123);
 		ASSERT_STREQ(q, "xxy 123");
+		
+		char *r = x.parse(POD::ConstBuffer("xxy {:d5}"), 123);
+		ASSERT_STREQ(r, "xxy 00123");
 	}
 	
 	TEST_F(FormatOne, Test2) {
@@ -50,6 +53,22 @@ namespace {
 		char *q = x.parse(POD::ConstBuffer("xxy {:d }"), 123);
 		ASSERT_STREQ(p, "xxy {badspec}");
 	}
+	
+	TEST_F(FormatOne, Test3) {
+		char *p = x.parse(POD::ConstBuffer("xxy {:x}"), 0x123abcde);
+		ASSERT_STREQ(p, "xxy 123abcde");
+		
+		char *q = x.parse(POD::ConstBuffer("xxy {:X}"), 0x123abcde);
+		ASSERT_STREQ(p, "xxy 123ABCDE");
+		
+		char *r = x.parse(POD::ConstBuffer("xxy {:o}"), 01234567);
+		ASSERT_STREQ(p, "xxy 1234567");
+		
+		char *s = x.parse(POD::ConstBuffer("xxy {:b}"), 0xac);
+		ASSERT_STREQ(p, "xxy 10101100");
+	}
+	
+	
 }
 
 int runFormatTests()
