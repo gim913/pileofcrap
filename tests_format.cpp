@@ -44,6 +44,12 @@ namespace {
 		
 		char *r = x.parse(POD::ConstBuffer("xxy {:d5}"), 123);
 		ASSERT_STREQ(r, "xxy 00123");
+		
+		char *t = x.parse(POD::ConstBuffer("xxy {:d}"), static_cast<e_long>(0x8000000000000000ull));
+		ASSERT_STREQ(t, "xxy -9223372036854775808");
+		
+		char *s = x.parse(POD::ConstBuffer("xxy {:d}"), -123);
+		ASSERT_STREQ(s, "xxy -123");
 	}
 	
 	TEST_F(FormatOne, Test2) {

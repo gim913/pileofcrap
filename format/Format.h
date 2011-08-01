@@ -44,10 +44,6 @@ class FormatB {
 		pos += toWrite;
 	}
 
-	void print(int x) {
-		print(static_cast<e_ulong>(x));
-	}
-	
 	struct FormatSpecifier {
 		int mode;
 		bool hexUpper;
@@ -88,26 +84,42 @@ class FormatB {
 		}
 		return 0;
 	}
+
+	void print(int x) {
+		print(static_cast<e_ulong>(x), x < 0 ? 1 : 0);
+	}
 	
-	void print(e_ulong x) {
+	void print(e_long x) {
+		print(static_cast<e_ulong>(x), x < 0 ? 1 : 0);
+	}
+	void print(e_ulong x, int hasSign = 0) {
 		FormatSpecifier fs;
 		if (parseFormat(fs))
 			return;
-		realPrint(x, fs);
+		realPrint(x, fs, hasSign);
 	}
 	
-	void realPrint(e_ulong x, const FormatSpecifier& fs) {
+	void realPrint(e_ulong x, const FormatSpecifier& fs, int hasSign) {
 		int l=0;
 		int mode = fs.mode;
 		int maxPrecision = fs.maxPrecision;
 		bool hexUpper = fs.hexUpper;
 		
+		// sign is only sensible in decimal mode
+		if (mode != 10) { hasSign = 0; }
+		
+		// fix the value, this should be ok for extreme values
+		if (hasSign && mode == 10) {
+			x = -static_cast<e_long>(x);
+		}
+		
 		// calc len, log could be used, but I want to avoid it
-		{ int t=x; while (t) { l++; t /= mode; } if (!x) l++; }
+		{ e_ulong t=x; while (t) { l++; t /= mode; } if (!x) l++; }
 		
 		if (maxPrecision < l) {
 			maxPrecision = l;
 		}
+		if (hasSign) { maxPrecision++; }
 		
 		size_t toWrite = Buf_Size-1 - pos;
 		if (maxPrecision < toWrite) {
@@ -115,13 +127,13 @@ class FormatB {
 		}
 		
 		if (mode != 16) {
-			for (; maxPrecision>0; maxPrecision--) {
+			for (; maxPrecision > hasSign; maxPrecision--) {
 				dataBuf[pos+maxPrecision-1] = '0' + (x % mode);
 				x /= mode;
 			}
 			
 		} else {
-			for (; maxPrecision>0; maxPrecision--) {
+			for (; maxPrecision > hasSign; maxPrecision--) {
 				int t = (x % mode);
 				if (t>9) {
 					dataBuf[pos+maxPrecision-1] = (hexUpper?'A':'a')+(t-10);
@@ -132,10 +144,14 @@ class FormatB {
 				x /= mode;
 			}
 		}
+		
+		// add sign
+		if (hasSign) { dataBuf[pos+maxPrecision-1] = '-'; }
+		
 		pos += toWrite;
 	}
 	
-	char* parse(const POD::ConstBuffer& format, int x) {
+	char* parse(const POD::ConstBuffer& format, e_long x) {
 		parseInit(format);
 		
 		parseItem(false);
