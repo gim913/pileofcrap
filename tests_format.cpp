@@ -30,6 +30,26 @@ namespace {
 		char *p = x.parse(POD::ConstBuffer("xxy{,-123"));
 		ASSERT_STREQ(p, "xxy{badformat}");
 	}
+	
+	struct FormatOne : public ::testing::Test {
+		FormatOne() {}
+		Format x;
+	};
+	TEST_F(FormatOne, Test1) {
+		char *p = x.parse(POD::ConstBuffer("xxy {} {}zzv"), 123);
+		ASSERT_STREQ(p, "xxy 123 {noarg}zzv");
+		
+		char *q = x.parse(POD::ConstBuffer("xxy {:d}"), 123);
+		ASSERT_STREQ(q, "xxy 123");
+	}
+	
+	TEST_F(FormatOne, Test2) {
+		char *p = x.parse(POD::ConstBuffer("xxy {:z}"), 123);
+		ASSERT_STREQ(p, "xxy {badspec}");
+		
+		char *q = x.parse(POD::ConstBuffer("xxy {:d }"), 123);
+		ASSERT_STREQ(p, "xxy {badspec}");
+	}
 }
 
 int runFormatTests()

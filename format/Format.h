@@ -44,21 +44,81 @@ class FormatB {
 		pos += toWrite;
 	}
 
+	void print(int x) {
+		int l=0;
+		
+		const char *f = currentFormat.ptr;
+		const char *fEnd = currentFormat.ptr + currentFormat.len;
+		
+		int mode;
+		bool hexUpper = false;
+		int maxLen = 0;
+		if (f && f != fEnd) {
+			switch (*f) {
+				case 'b': case 'B': mode=2; break;
+				case 'o': case 'O': mode=8; break;
+				case 'd': case 'D': mode=10; break;
+				case 'X':
+					hexUpper = true;
+				          case 'x': mode=16; break;
+				default:
+					eat(POD::ConstBuffer("{badspec}",9));
+					return;
+			}
+			f++;
+			if (f != fEnd) {
+				while ((*f) >= '0' && (*f) <= '9') { maxLen *= 10; maxLen += (*f++) - '0'; }
+				if (f != fEnd) {
+					eat(POD::ConstBuffer("{badspec}",9));
+					return;
+				}
+			}
+		}
+		// calc len
+		{
+			int t=x;
+			while (t) { l++; t /= 10; }
+			if (!x) l++;
+		}
+		
+		size_t toWrite = Buf_Size-1 - pos;
+		if (l < toWrite) {
+			toWrite = l;
+		}
+		for (; l>0; l--) {
+			dataBuf[pos+l-1] = '0' + (x % 10);
+			x /= 10;
+		}
+		pos += toWrite;
+	}
+	
+	char* parse(const POD::ConstBuffer& format, int x) {
+		parseInit(format);
+		
+		parseItem(false);
+		print(x);
+		parseItem(true);
+	}
+	
 	char* parse(const POD::ConstBuffer& format) {
+		parseInit(format);
+		return parseItem(true);
+	}
+	
+	void parseInit(const POD::ConstBuffer& format) {
 		p = format.ptr;
 		last = p;
 		end = p + format.len;
 		
 		dataBuf[0] = dataBuf[Buf_Size-1] = 0;
 		pos = 0;
-		
-		return parseItem(true);
 	}
 	
 	char* parseItem(bool lastPass = false) {
 		#define CHECK_END ({if (p == end) { break; }})
 		int len = 0;
 		
+		//std::cout << ">> parseItem("<<lastPass<<") " << p << std::endl;
 		do {
 			index = 0;
 			indexPresent = false;
@@ -133,8 +193,9 @@ class FormatB {
 				len += eat(POD::ConstBuffer("{badformat}", 11));
 				
 			} else {
-				if (formatStart)
+				if (formatStart) {
 					currentFormat = POD::ConstBuffer(formatStart, p-formatStart);
+				}
 				needsProcessing = true;
 				
 				if (lastPass) {
