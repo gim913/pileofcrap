@@ -59,7 +59,7 @@ class FormatB {
 		#define CHECK_END ({if (p == end) { break; }})
 		int len = 0;
 		
-		while(true) {
+		do {
 			index = 0;
 			indexPresent = false;
 			alignment = 0;
@@ -140,13 +140,12 @@ class FormatB {
 				if (lastPass) {
 					len += eat(POD::ConstBuffer("{noarg}", 7));
 				}
-				
 				p++;
 				CHECK_END;
 			}
 			
 			last = p;
-		}
+		} while (lastPass);
 		return dataBuf;
 	}
 };
