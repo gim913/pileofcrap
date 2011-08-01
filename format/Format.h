@@ -44,7 +44,7 @@ class FormatB {
 		pos += toWrite;
 	}
 
-	char* parse(const POD::ConstBuffer& format, bool lastPass = false) {
+	char* parse(const POD::ConstBuffer& format) {
 		p = format.ptr;
 		last = p;
 		end = p + format.len;
@@ -52,22 +52,22 @@ class FormatB {
 		dataBuf[0] = dataBuf[Buf_Size-1] = 0;
 		pos = 0;
 		
-		return parseItem();
+		return parseItem(true);
 	}
 	
 	char* parseItem(bool lastPass = false) {
 		#define CHECK_END ({if (p == end) { break; }})
 		int len = 0;
 		
-		index = 0;
-		indexPresent = false;
-		alignment = 0;
-		alignmentSign = false;
-		alignmentPresent = false;
-		currentFormat = POD::ConstBuffer(NULL, 0);
-		needsProcessing = false;
-	
-		while (true) {
+		while(true) {
+			index = 0;
+			indexPresent = false;
+			alignment = 0;
+			alignmentSign = false;
+			alignmentPresent = false;
+			currentFormat = POD::ConstBuffer(NULL, 0);
+			needsProcessing = false;
+		
 			while (p < end && *p != '{') {
 				++p;
 			}
@@ -136,6 +136,7 @@ class FormatB {
 				if (formatStart)
 					currentFormat = POD::ConstBuffer(formatStart, p-formatStart);
 				needsProcessing = true;
+				
 				p++;
 				CHECK_END;
 			}
