@@ -13,12 +13,12 @@ namespace {
 	
 	TEST_F(FormatSimple, Test1) {
 		char *p = x.parse(POD::ConstBuffer("xxy{} {}zzv"));
-		ASSERT_STREQ(p, "xxy zzv");
+		ASSERT_STREQ(p, "xxy{noarg} {noarg}zzv");
 	}
 	
 	TEST_F(FormatSimple, Test2) {
 		char *p = x.parse(POD::ConstBuffer("xxy{} {}zz{{v"));
-		ASSERT_STREQ(p, "xxy zz{v");
+		ASSERT_STREQ(p, "xxy{noarg} {noarg}zz{v");
 	}
 	
 	TEST_F(FormatSimple, Test3) {

@@ -137,6 +137,10 @@ class FormatB {
 					currentFormat = POD::ConstBuffer(formatStart, p-formatStart);
 				needsProcessing = true;
 				
+				if (lastPass) {
+					len += eat(POD::ConstBuffer("{noarg}", 7));
+				}
+				
 				p++;
 				CHECK_END;
 			}
