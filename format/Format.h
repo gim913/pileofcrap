@@ -12,11 +12,20 @@
 #include "../types.h"
 
 template <size_t Buf_Size = 1024>
-struct FormatB {
+class FormatB {
 	char dataBuf[Buf_Size];
 	int pos;
 	typedef char Ch;
 	
+	// those variables will be needed across different funcs
+	int index;
+	bool indexPresent;
+	int alignment;
+	bool alignmentSign;
+	bool alignmentPresent;
+	POD::ConstBuffer currentFormat;
+	bool needsProcessing;
+			
 	FormatB() {
 	}
 	
@@ -30,7 +39,7 @@ struct FormatB {
 		memcpy(dataBuf+pos, buf.ptr, toWrite);
 		pos += toWrite;
 	}
-	
+
 	char* format(const POD::ConstBuffer& format) {
 		#define CHECK_END ({if (p == end) { break; }})
 		const Ch* p = format.ptr;
@@ -41,6 +50,14 @@ struct FormatB {
 		dataBuf[0] = dataBuf[Buf_Size-1] = 0;
 		pos = 0;
 		
+		index = 0;
+		indexPresent = false;
+		alignment = 0;
+		alignmentSign = false;
+		alignmentPresent = false;
+		currentFormat = POD::ConstBuffer(NULL, 0);
+		needsProcessing = false;
+	
 		while (true) {
 			while (p < end && *p != '{') {
 				++p;
@@ -63,8 +80,6 @@ struct FormatB {
 			}
 			
 			// calculate index
-			int index = 0;
-			bool indexPresent = false;
 			if (*p >= '0' && *p <= '9') {
 				indexPresent = true;
 				while (p < end && *p >= '0' && *p <= '9') {
@@ -74,9 +89,6 @@ struct FormatB {
 			}
 			
 			// ok check the alignment
-			int alignment = 0;
-			bool alignmentSign = false;
-			bool alignmentPresent = false;
 			if (*p == ',') {
 				alignmentPresent = true;
 				p++;
@@ -97,10 +109,12 @@ struct FormatB {
 			}
 			
 			// ok check format string
+			char* formatStart = NULL;
 			if (*p == ':') {
 				p++;
 				CHECK_END;
 				
+				formatStart = p;
 				while (p < end && *p != '}') {
 					p++;
 				}
@@ -110,6 +124,9 @@ struct FormatB {
 				len += eat(POD::ConstBuffer("{badformat}", 11));
 				
 			} else {
+				if (formatStart)
+					format = POD::ConstBuffer(formatStart, p-formatStart);
+				needsProcessing = true;
 				p++;
 				CHECK_END;
 			}
