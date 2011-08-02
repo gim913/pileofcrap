@@ -11,6 +11,15 @@
 
 #include "../types.h"
 
+// so the goal is to have (very limited) implementation of String.Format in C++
+// here are some constraints though:
+//   + I want it to be C++ (which kinda sux cause using C++0x features, would make it easier)
+//   + no exceptions
+//   + I don't care about resulting size (of executable ;p)
+//   + there won't be support for time/date formatting
+//   + similarily there won't be support for 'currency', cause I don't want
+//      and don't need to play with locale
+// I'm not quite sure yet if I will actually finish this
 template <size_t Buf_Size = 1024>
 class FormatB {
 	char dataBuf[Buf_Size];
@@ -131,36 +140,54 @@ class FormatB {
 		}
 		if (hasSign) { maxPrecision++; }
 		
+		if (alignmentPresent && alignment) {
+			// in this case alignment doesn't apply
+			if (alignment < maxPrecision) {
+				alignment = 0;
+			}
+		}
+		
+		size_t savedPrecision = maxPrecision;
+		alignment && !alignmentSign && fill(alignment - maxPrecision);
+		
 		size_t toWrite = Buf_Size-1 - pos;
 		if (maxPrecision < toWrite) {
 			toWrite = maxPrecision;
 		}
 		
-		// loops continues down to 'hasSign' in order
-		// to leave a space for a '-' if there's such a need
-		if (mode != 16) {
-			for (; maxPrecision > hasSign; maxPrecision--) {
-				dataBuf[pos+maxPrecision-1] = '0' + (x % mode);
-				x /= mode;
-			}
-			
-		} else {
-			for (; maxPrecision > hasSign; maxPrecision--) {
-				int t = (x % mode);
-				if (t>9) {
-					dataBuf[pos+maxPrecision-1] = (hexUpper?'A':'a')+(t-10);
-					
-				} else {
-					dataBuf[pos+maxPrecision-1] = '0' + t;
-				}
-				x /= mode;
-			}
+		// skip thelast digits if there's no place to print them
+		for (; maxPrecision > hasSign && maxPrecision > toWrite; maxPrecision--) {
+			x /= mode;
 		}
 		
-		// add sign
-		if (hasSign) { dataBuf[pos+maxPrecision-1] = '-'; }
-		
+		// first check if there's any sense to do the loop over the digits
+		if (hasSign < toWrite) {
+			// loops continues down to 'hasSign' in order
+			// to leave a space for a '-' if there's such a need
+			if (mode != 16) {
+				for (; maxPrecision > hasSign; maxPrecision--) {
+					dataBuf[pos+maxPrecision-1] = '0' + (x % mode);
+					x /= mode;
+				}
+				
+			} else {
+				for (; maxPrecision > hasSign; maxPrecision--) {
+					int t = (x % mode);
+					if (t>9) {
+						dataBuf[pos+maxPrecision-1] = (hexUpper?'A':'a')+(t-10);
+						
+					} else {
+						dataBuf[pos+maxPrecision-1] = '0' + t;
+					}
+					x /= mode;
+				}
+			}
+		}
+		// add sign (if there's a place for that)
+		if (hasSign && toWrite) { dataBuf[pos+maxPrecision-1] = '-'; }
 		pos += toWrite;
+		
+		alignment && alignmentSign && fill(alignment - savedPrecision);
 	}
 	
 	char* parse(const POD::ConstBuffer& format, e_long x) {
@@ -244,7 +271,6 @@ class FormatB {
 						alignment = 10*alignment + (*p++ - '0');
 					}
 				}
-				if (alignmentSign) alignment *= -1;
 				CHECK_END;
 			}
 			

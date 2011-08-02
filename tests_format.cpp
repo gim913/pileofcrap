@@ -74,7 +74,110 @@ namespace {
 		ASSERT_STREQ(p, "xxy 10101100");
 	}
 	
+	TEST_F(FormatOne, Test4) {
+		char *p = x.parse(POD::ConstBuffer("foo{,6}"), 345);
+		ASSERT_STREQ(p, "foo   345");
+		
+		char *q = x.parse(POD::ConstBuffer("foo{,6}"), -345);
+		ASSERT_STREQ(q, "foo  -345");
+		
+		char *r = x.parse(POD::ConstBuffer("foo {,3}"), 12345);
+		ASSERT_STREQ(r, "foo 12345");
+		
+		char *s = x.parse(POD::ConstBuffer("foo {,3}"), -12345);
+		ASSERT_STREQ(s, "foo -12345");
+	}
 	
+	TEST_F(FormatOne, Test4b) {
+		char *p = x.parse(POD::ConstBuffer("foo{,-6}"), 345);
+		ASSERT_STREQ(p, "foo345   ");
+		
+		char *q = x.parse(POD::ConstBuffer("foo{,-6}"), -345);
+		ASSERT_STREQ(q, "foo-345  ");
+		
+		char *r = x.parse(POD::ConstBuffer("foo {,-3}"), 12345);
+		ASSERT_STREQ(r, "foo 12345");
+		
+		char *s = x.parse(POD::ConstBuffer("foo {,-3}"), -12345);
+		ASSERT_STREQ(s, "foo -12345");
+	}
+	
+	TEST_F(FormatOne, Test5) {
+		char* p = x.parse(POD::ConstBuffer("foo{,6:d5}"), 345);
+		ASSERT_STREQ(p, "foo 00345");
+		
+		char* q = x.parse(POD::ConstBuffer("foo{,6:d5}"), -345);
+		ASSERT_STREQ(q, "foo-00345");
+		
+		char *r = x.parse(POD::ConstBuffer("foo{,8:d6}"), 12345);
+		ASSERT_STREQ(r, "foo  012345");
+		
+		char *s = x.parse(POD::ConstBuffer("foo{,8:d6}"), -12345);
+		ASSERT_STREQ(s, "foo -012345");
+	}
+	
+	TEST_F(FormatOne, Test5b) {
+		char* p = x.parse(POD::ConstBuffer("foo{,-6:d4}"), 345);
+		ASSERT_STREQ(p, "foo0345  ");
+		
+		char* q = x.parse(POD::ConstBuffer("foo{,-6:d4}"), -345);
+		ASSERT_STREQ(q, "foo-0345 ");
+		
+		char *r = x.parse(POD::ConstBuffer("foo{,-8:d6}"), 12345);
+		ASSERT_STREQ(r, "foo012345  ");
+		
+		char *s = x.parse(POD::ConstBuffer("foo{,-8:d6}"), -12345);
+		ASSERT_STREQ(s, "foo-012345 ");
+	}
+	
+	// these, are some extreme checks to make sure that
+	// "at the end of buffer", the string will be properly formatted
+	struct FormatExt : public ::testing::Test {
+		FormatExt() {}
+		FormatB<10> x;
+	};
+	
+	TEST_F(FormatExt, Test1) {
+		char *p = x.parse(POD::ConstBuffer("foobar{}"), 12345);
+		ASSERT_STREQ(p, "foobar123");
+		
+		char *q = x.parse(POD::ConstBuffer("foobar{}"), -12345);
+		ASSERT_STREQ(q, "foobar-12");
+		
+		char *r = x.parse(POD::ConstBuffer("foobar{:d7}"), 12345);
+		ASSERT_STREQ(r, "foobar001");
+		
+		char *s = x.parse(POD::ConstBuffer("foobar{:d7}"), -12345);
+		ASSERT_STREQ(s, "foobar-00");
+	}
+	
+	TEST_F(FormatExt, Test2) {
+		char *p = x.parse(POD::ConstBuffer("foobar{,8}"), 12345);
+		ASSERT_STREQ(p, "foobar   ");
+		
+		char *q = x.parse(POD::ConstBuffer("foobar{,8}"), -12345);
+		ASSERT_STREQ(q, "foobar  -");
+		
+		char *r = x.parse(POD::ConstBuffer("foobar{,9}"), 12345);
+		ASSERT_STREQ(r, "foobar   ");
+		
+		char *s = x.parse(POD::ConstBuffer("foobar{,9}"), -12345);
+		ASSERT_STREQ(s, "foobar   ");
+	}
+
+	TEST_F(FormatExt, Test3) {
+		char *p = x.parse(POD::ConstBuffer("foo{,9:d7}"), 12345);
+		ASSERT_STREQ(p, "foo  0012");
+		
+		char *q = x.parse(POD::ConstBuffer("foo{,9:d7}"), -12345);
+		ASSERT_STREQ(q, "foo -0012");
+		
+		char *r = x.parse(POD::ConstBuffer("foo{,-10}"), 12345);
+		ASSERT_STREQ(r, "foo12345 ");
+		
+		char *s = x.parse(POD::ConstBuffer("foo{,-10}"), -12345);
+		ASSERT_STREQ(s, "foo-12345");
+	}
 }
 
 int runFormatTests()
