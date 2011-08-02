@@ -26,7 +26,7 @@ class FormatB {
 	bool indexPresent;
 	int alignment;
 	bool alignmentSign;
-	bool alignmentPresent;
+	bool alignmentPresent; // I could probably remove this and just check if alignment != 0 instead
 	POD::ConstBuffer currentFormat;
 	bool needsProcessing;
 	
@@ -41,6 +41,16 @@ class FormatB {
 		}
 		//std::cout << "eating... " << buf.len << " " << buf.ptr << std::endl;
 		memcpy(dataBuf+pos, buf.ptr, toWrite);
+		pos += toWrite;
+	}
+	
+	size_t fill(size_t count, char filler = ' ') {
+		size_t toWrite = Buf_Size-1 - pos;
+		if (count < toWrite) {
+			toWrite = count;
+		}
+		
+		memset(dataBuf+pos, filler, toWrite);
 		pos += toWrite;
 	}
 
@@ -126,6 +136,8 @@ class FormatB {
 			toWrite = maxPrecision;
 		}
 		
+		// loops continues down to 'hasSign' in order
+		// to leave a space for a '-' if there's such a need
 		if (mode != 16) {
 			for (; maxPrecision > hasSign; maxPrecision--) {
 				dataBuf[pos+maxPrecision-1] = '0' + (x % mode);
