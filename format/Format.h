@@ -104,13 +104,17 @@ class FormatB {
 		return 0;
 	}
 
-	void print(int x) {
-		print(static_cast<e_ulong>(x), x < 0 ? 1 : 0);
-	}
+	void print(char x)     { print(static_cast<e_ulong>(x), x < 0 ? 1 : 0); }
+	void print(e_byte x)   { print(static_cast<e_ulong>(x), x < 0 ? 1 : 0); }
+	void print(e_short x)  { print(static_cast<e_ulong>(x), x < 0 ? 1 : 0); }
+	void print(e_int x)    { print(static_cast<e_ulong>(x), x < 0 ? 1 : 0); }
+	void print(e_long x)   { print(static_cast<e_ulong>(x), x < 0 ? 1 : 0); }
 	
-	void print(e_long x) {
-		print(static_cast<e_ulong>(x), x < 0 ? 1 : 0);
-	}
+	void print(bool x)     { print(static_cast<e_ulong>(x)); }
+	void print(e_ubyte x)  { print(static_cast<e_ulong>(x)); }
+	void print(e_ushort x) { print(static_cast<e_ulong>(x)); }
+	void print(e_uint x)   { print(static_cast<e_ulong>(x)); }
+	
 	void print(e_ulong x, int hasSign = 0) {
 		FormatSpecifier fs;
 		if (parseFormat(fs))
@@ -190,7 +194,8 @@ class FormatB {
 		alignment && alignmentSign && fill(alignment - savedPrecision);
 	}
 	
-	char* parse(const POD::ConstBuffer& format, e_long x) {
+	template <class T>
+	char* parse(const POD::ConstBuffer& format, T x) {
 		parseInit(format);
 		
 		parseItem(false);

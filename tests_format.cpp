@@ -178,6 +178,50 @@ namespace {
 		char *s = x.parse(POD::ConstBuffer("foo{,-10}"), -12345);
 		ASSERT_STREQ(s, "foo-12345");
 	}
+	
+	
+	struct FormatTwo : public ::testing::Test {
+		FormatTwo() {}
+		Format x;
+	};
+	
+	TEST_F(FormatTwo, TestBool) {
+		char *p = x.parse(POD::ConstBuffer("foo{:b}bar"), true);
+		ASSERT_STREQ(p, "foo1bar");
+		
+		char *q = x.parse(POD::ConstBuffer("foo{:o}bar"), true);
+		ASSERT_STREQ(q, "foo1bar");
+		
+		char *r = x.parse(POD::ConstBuffer("foo{:d}bar"), true);
+		ASSERT_STREQ(r, "foo1bar");
+		
+		char *s = x.parse(POD::ConstBuffer("foo{:x}bar"), true);
+		ASSERT_STREQ(s, "foo1bar");
+		
+		// this will fail ATM
+		char *t = x.parse(POD::ConstBuffer("foo {} bar"), true);
+		ASSERT_STREQ(t, "foo true bar");
+	}
+	
+	TEST_F(FormatTwo, TestChar) {
+		char *p = x.parse(POD::ConstBuffer("foo {:d} bar"), 'a');
+		ASSERT_STREQ(p, "foo 97 bar");
+		
+		char *q = x.parse(POD::ConstBuffer("foo {:x} bar"), 'a');
+		ASSERT_STREQ(q, "foo 61 bar");
+		
+		// this will fail ATM
+		char *r = x.parse(POD::ConstBuffer("foo {} bar"), 'a');
+		ASSERT_STREQ(r, "foo a bar");
+	}
+	
+	TEST_F(FormatTwo, TestUbyte) {
+		char *p = x.parse(POD::ConstBuffer("foo {:d} bar"), static_cast<e_ubyte>(123));
+		ASSERT_STREQ(p, "foo 123 bar");
+		
+		char *q = x.parse(POD::ConstBuffer("foo {} bar"), static_cast<e_ubyte>(123));
+		ASSERT_STREQ(q, "foo 123 bar");
+	}
 }
 
 int runFormatTests()
