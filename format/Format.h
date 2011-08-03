@@ -9,6 +9,8 @@
 
 #include <iostream>
 
+#include <cstring>
+
 #include "../types.h"
 
 // so the goal is to have (very limited) implementation of String.Format in C++
@@ -62,6 +64,15 @@ class FormatB {
 		memset(dataBuf+pos, filler, toWrite);
 		pos += toWrite;
 	}
+	
+	static size_t fill(char *buf, size_t toWrite, size_t count, char filler = ' ') {
+		if (count < toWrite) {
+			toWrite = count;
+		}
+		
+		memset(buf, filler, toWrite);
+		return toWrite;
+	}
 
 	struct FormatSpecifier {
 		int mode;
@@ -69,12 +80,12 @@ class FormatB {
 		size_t maxPrecision;
 	};
 	
-	int parseFormat(FormatSpecifier& ret, bool generic = false) {
+	int parseFormat(FormatSpecifier& ret, int defaultMode = 10) {
 		const char *f = currentFormat.ptr;
 		const char *fEnd = currentFormat.ptr + currentFormat.len;
 		
 		// default mode is decimal
-		ret.mode = 10;
+		ret.mode = defaultMode;
 		ret.hexUpper = false;
 		ret.maxPrecision = 0;
 		if (f && f != fEnd) {
@@ -86,7 +97,7 @@ class FormatB {
 					ret.hexUpper = true;
 				case 'x': ret.mode=16; break;
 				default:
-					if (generic) {
+					if (defaultMode != 10) {
 						ret.mode = 0;
 						break;
 					}
@@ -108,13 +119,27 @@ class FormatB {
 		return 0;
 	}
 
-	void print(char x)     { print(static_cast<e_ulong>(x), x < 0 ? 1 : 0); }
+	void print(char x)     {
+		//std::cout<< "char   " << std::endl;
+		FormatSpecifier fs;
+		if (parseFormat(fs, 0))
+			return;
+		realPrint<CharPrinter>(static_cast<e_ulong>(x), fs, x < 0 ? 1 : 0);
+	}
+	
+	void print(bool x)     {
+		//std::cout<< "bool   " << std::endl;
+		FormatSpecifier fs;
+		if (parseFormat(fs, 0))
+			return;
+		realPrint<BoolPrinter>(static_cast<e_ulong>(x), fs, x < 0 ? 1 : 0);
+	}
+	
 	void print(e_byte x)   { print(static_cast<e_ulong>(x), x < 0 ? 1 : 0); }
 	void print(e_short x)  { print(static_cast<e_ulong>(x), x < 0 ? 1 : 0); }
 	void print(e_int x)    { print(static_cast<e_ulong>(x), x < 0 ? 1 : 0); }
 	void print(e_long x)   { print(static_cast<e_ulong>(x), x < 0 ? 1 : 0); }
-	
-	void print(bool x)     { print(static_cast<e_ulong>(x)); }
+
 	void print(e_ubyte x)  { print(static_cast<e_ulong>(x)); }
 	void print(e_ushort x) { print(static_cast<e_ulong>(x)); }
 	void print(e_uint x)   { print(static_cast<e_ulong>(x)); }
@@ -174,6 +199,60 @@ class FormatB {
 			}
 			// add sign (if there's a place for that)
 			if (hasSign && bufLen) { buf[maxPrecision-1] = '-'; }
+		}
+	};
+	
+	struct CharPrinter {
+		static size_t getLen(e_long x, int mode) {
+			if (0 == mode) {
+				return 1;
+		
+			} else {
+				return IntPrinter::getLen(x, mode);
+			}
+		}
+		
+		static void print(char* buf, size_t bufLen, e_ulong x, const FormatSpecifier& fs, int hasSign) {
+			if (0 == fs.mode) {
+				if (bufLen > 0) {
+					buf[0] = static_cast<char>(x);
+				}
+				
+			} else {
+				IntPrinter::print(buf, bufLen, x, fs, hasSign);
+			}
+		}
+	};
+	
+	struct BoolPrinter {
+		static size_t getLen(e_long x, int mode) {
+			if (0 == mode) {
+				return x ? 4 : 5;
+		
+			} else {
+				return IntPrinter::getLen(x, mode);
+			}
+		}
+		
+		static void print(char* buf, size_t bufLen, e_ulong x, const FormatSpecifier& fs, int hasSign) {
+			if (0 == fs.mode) {
+				size_t maxPrecision = fs.maxPrecision;
+				size_t noOfZeroes = maxPrecision - (x ? 4 : 5);
+				size_t written = fill(buf, bufLen, noOfZeroes, 'x');
+				bufLen -= written;
+				buf += written;
+				if (x) {
+					static const char strTrue[] = "trueQQQQQQ";
+					memcpy(buf, strTrue, bufLen);
+					
+				} else {
+					static const char strFalse[] = "falseQQQQQ";
+					memcpy(buf, strFalse, bufLen);
+				}
+				
+			} else {
+				IntPrinter::print(buf, bufLen, x, fs, hasSign);
+			}
 		}
 	};
 	
