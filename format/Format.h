@@ -96,11 +96,13 @@ class FormatB {
 				case 'X':
 					ret.hexUpper = true;
 				case 'x': ret.mode=16; break;
-				default:
-					if (defaultMode != 10) {
+				
+				if (defaultMode != 10) {
+					case 'g':
 						ret.mode = 0;
 						break;
-					}
+				}
+				default:
 					eat(POD::ConstBuffer("{badspec}",9));
 					return 1;
 			}
