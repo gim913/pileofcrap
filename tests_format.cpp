@@ -227,6 +227,9 @@ namespace {
 		
 		char *v = x.parse(POD::ConstBuffer("foo {,10:g8} bar"), false);
 		ASSERT_STREQ(v, "foo   ___false bar");
+		
+		char *w = x.parse(POD::ConstBuffer("foo {:z} bar"), false);
+		ASSERT_STREQ(w, "foo {badspec} bar");
 	}
 	
 	TEST_F(FormatTwo, TestChar) {
@@ -245,6 +248,9 @@ namespace {
 		
 		char *t = x.parse(POD::ConstBuffer("foo {,-5:g3} bar"), 'a');
 		ASSERT_STREQ(t, "foo __a   bar");
+		
+		char *u = x.parse(POD::ConstBuffer("foo {:z} bar"), 'a');
+		ASSERT_STREQ(u, "foo {badspec} bar");
 	}
 	
 	TEST_F(FormatTwo, TestUbyte) {
