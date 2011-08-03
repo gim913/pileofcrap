@@ -66,7 +66,7 @@ class FormatB {
 	struct FormatSpecifier {
 		int mode;
 		bool hexUpper;
-		int maxPrecision;
+		size_t maxPrecision;
 	};
 	
 	int parseFormat(FormatSpecifier& ret, bool generic = false) {
@@ -123,23 +123,24 @@ class FormatB {
 		FormatSpecifier fs;
 		if (parseFormat(fs))
 			return;
-		realPrint(x, fs, hasSign);
+		realPrint<IntPrinter>(x, fs, hasSign);
 	}
 	
 	struct IntPrinter {
-		static int getLen(e_long x, int mode) {
-			int l = 0;
+		static size_t getLen(e_long x, int mode) {
+			size_t l = 0;
 			// calc len, log could be used, but I want to avoid it
 			e_ulong t=x;
 			while (t) {
-				l++; t /= mode;
+				l++;
+				t /= mode;
 			}
 			if (!x) l++;
 			return l;
 		}
 		
 		static void print(char* buf, size_t bufLen, e_ulong x, const FormatSpecifier& fs, int hasSign) {
-			int maxPrecision = fs.maxPrecision;
+			size_t maxPrecision = fs.maxPrecision;
 			bool hexUpper = fs.hexUpper;
 			int mode = fs.mode;
 			
@@ -175,6 +176,8 @@ class FormatB {
 			if (hasSign && bufLen) { buf[maxPrecision-1] = '-'; }
 		}
 	};
+	
+	template <class TypePrinter>
 	void realPrint(e_ulong x, const FormatSpecifier& readOnlyFs, int hasSign) {
 		FormatSpecifier fs = readOnlyFs;
 		// sign is only sensible in decimal mode
@@ -185,7 +188,7 @@ class FormatB {
 			x = -static_cast<e_long>(x);
 		}
 		
-		int l = IntPrinter::getLen(x, fs.mode);
+		size_t l = TypePrinter::getLen(x, fs.mode);
 		if (fs.maxPrecision < l) {
 			fs.maxPrecision = l;
 		}
@@ -204,9 +207,7 @@ class FormatB {
 		if (fs.maxPrecision < toWrite) {
 			toWrite = fs.maxPrecision;
 		}
-		
-		IntPrinter::print(dataBuf + pos, toWrite, x, fs, hasSign);
-		
+		TypePrinter::print(dataBuf + pos, toWrite, x, fs, hasSign);
 		pos += toWrite;
 		
 		alignment && alignmentSign && fill(alignment - fs.maxPrecision);
