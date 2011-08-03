@@ -179,6 +179,26 @@ namespace {
 		ASSERT_STREQ(s, "foo-12345");
 	}
 	
+	TEST_F(FormatExt, Test4) {
+		char *p = x.parse(POD::ConstBuffer("foo{:g7}"), true);
+		ASSERT_STREQ(p, "foo___tru");
+		
+		char *q = x.parse(POD::ConstBuffer("foo{,7:g6}"), true);
+		ASSERT_STREQ(q, "foo __tru");
+		
+		char *r = x.parse(POD::ConstBuffer("foo{,10:g7}"), true);
+		ASSERT_STREQ(r, "foo   ___");
+		
+		char *s = x.parse(POD::ConstBuffer("foo{,-10:g7}"), true);
+		ASSERT_STREQ(s, "foo___tru");
+		
+		char *t = x.parse(POD::ConstBuffer("foo{,-10:g7}"), false);
+		ASSERT_STREQ(t, "foo__fals");
+		
+		char *u = x.parse(POD::ConstBuffer("foo{,-6}"), false);
+		ASSERT_STREQ(u, "foofalse ");
+	}
+	
 	
 	struct FormatTwo : public ::testing::Test {
 		FormatTwo() {}
@@ -189,18 +209,24 @@ namespace {
 		char *p = x.parse(POD::ConstBuffer("foo{:b}bar"), true);
 		ASSERT_STREQ(p, "foo1bar");
 		
-		char *q = x.parse(POD::ConstBuffer("foo{:o}bar"), true);
-		ASSERT_STREQ(q, "foo1bar");
+		char *q = x.parse(POD::ConstBuffer("foo{:o2}bar"), true);
+		ASSERT_STREQ(q, "foo01bar");
 		
-		char *r = x.parse(POD::ConstBuffer("foo{:d}bar"), true);
-		ASSERT_STREQ(r, "foo1bar");
+		char *r = x.parse(POD::ConstBuffer("foo{:d3}bar"), true);
+		ASSERT_STREQ(r, "foo001bar");
 		
-		char *s = x.parse(POD::ConstBuffer("foo{:x}bar"), true);
-		ASSERT_STREQ(s, "foo1bar");
+		char *s = x.parse(POD::ConstBuffer("foo{:x4}bar"), true);
+		ASSERT_STREQ(s, "foo0001bar");
 		
 		// this will fail ATM
 		char *t = x.parse(POD::ConstBuffer("foo {} bar"), true);
 		ASSERT_STREQ(t, "foo true bar");
+		
+		char *u = x.parse(POD::ConstBuffer("foo {:g6} bar"), true);
+		ASSERT_STREQ(u, "foo __true bar");
+		
+		char *v = x.parse(POD::ConstBuffer("foo {,10:g8} bar"), false);
+		ASSERT_STREQ(v, "foo   ___false bar");
 	}
 	
 	TEST_F(FormatTwo, TestChar) {
@@ -213,6 +239,12 @@ namespace {
 		// this will fail ATM
 		char *r = x.parse(POD::ConstBuffer("foo {} bar"), 'a');
 		ASSERT_STREQ(r, "foo a bar");
+		
+		char *s = x.parse(POD::ConstBuffer("foo {:g3} bar"), 'a');
+		ASSERT_STREQ(s, "foo __a bar");
+		
+		char *t = x.parse(POD::ConstBuffer("foo {,-5:g3} bar"), 'a');
+		ASSERT_STREQ(t, "foo __a   bar");
 	}
 	
 	TEST_F(FormatTwo, TestUbyte) {

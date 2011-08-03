@@ -238,9 +238,10 @@ class FormatB {
 			if (0 == fs.mode) {
 				size_t maxPrecision = fs.maxPrecision;
 				size_t noOfZeroes = maxPrecision - (x ? 4 : 5);
-				size_t written = fill(buf, bufLen, noOfZeroes, 'x');
+				size_t written = fill(buf, bufLen, noOfZeroes, '_');
 				bufLen -= written;
 				buf += written;
+				// 'Q'-s are currently added for test only purposes
 				if (x) {
 					static const char strTrue[] = "trueQQQQQQ";
 					memcpy(buf, strTrue, bufLen);
