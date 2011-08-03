@@ -214,9 +214,13 @@ class FormatB {
 		
 		static void print(char* buf, size_t bufLen, e_ulong x, const FormatSpecifier& fs, int hasSign) {
 			if (0 == fs.mode) {
-				if (bufLen > 0) {
+				size_t maxPrecision = fs.maxPrecision;
+				size_t noOfZeroes = maxPrecision - 1;
+				size_t written = fill(buf, bufLen, noOfZeroes, '_');
+				bufLen -= written;
+				buf += written;
+				if (bufLen)
 					buf[0] = static_cast<char>(x);
-				}
 				
 			} else {
 				IntPrinter::print(buf, bufLen, x, fs, hasSign);
