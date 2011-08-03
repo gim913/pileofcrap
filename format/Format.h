@@ -69,7 +69,7 @@ class FormatB {
 		int maxPrecision;
 	};
 	
-	int parseFormat(FormatSpecifier& ret) {
+	int parseFormat(FormatSpecifier& ret, bool generic = false) {
 		const char *f = currentFormat.ptr;
 		const char *fEnd = currentFormat.ptr + currentFormat.len;
 		
@@ -86,6 +86,10 @@ class FormatB {
 					ret.hexUpper = true;
 				case 'x': ret.mode=16; break;
 				default:
+					if (generic) {
+						ret.mode = 0;
+						break;
+					}
 					eat(POD::ConstBuffer("{badspec}",9));
 					return 1;
 			}
@@ -122,76 +126,90 @@ class FormatB {
 		realPrint(x, fs, hasSign);
 	}
 	
-	void realPrint(e_ulong x, const FormatSpecifier& fs, int hasSign) {
-		int l=0;
-		int mode = fs.mode;
-		int maxPrecision = fs.maxPrecision;
-		bool hexUpper = fs.hexUpper;
+	struct IntPrinter {
+		static int getLen(e_long x, int mode) {
+			int l = 0;
+			// calc len, log could be used, but I want to avoid it
+			e_ulong t=x;
+			while (t) {
+				l++; t /= mode;
+			}
+			if (!x) l++;
+			return l;
+		}
 		
+		static void print(char* buf, size_t bufLen, e_ulong x, const FormatSpecifier& fs, int hasSign) {
+			int maxPrecision = fs.maxPrecision;
+			bool hexUpper = fs.hexUpper;
+			int mode = fs.mode;
+			
+			// skip thelast digits if there's no place to print them
+			for (; maxPrecision > hasSign && maxPrecision > bufLen; maxPrecision--) {
+				x /= mode;
+			}
+			
+			// first check if there's any sense to do the loop over the digits
+			if (hasSign < bufLen) {
+				// loops continues down to 'hasSign' in order
+				// to leave a space for a '-' if there's such a need
+				if (mode != 16) {
+					for (; maxPrecision > hasSign; maxPrecision--) {
+						buf[maxPrecision-1] = '0' + (x % mode);
+						x /= mode;
+					}
+					
+				} else {
+					for (; maxPrecision > hasSign; maxPrecision--) {
+						int t = (x % mode);
+						if (t>9) {
+							buf[maxPrecision-1] = (hexUpper?'A':'a')+(t-10);
+							
+						} else {
+							buf[maxPrecision-1] = '0' + t;
+						}
+						x /= mode;
+					}
+				}
+			}
+			// add sign (if there's a place for that)
+			if (hasSign && bufLen) { buf[maxPrecision-1] = '-'; }
+		}
+	};
+	void realPrint(e_ulong x, const FormatSpecifier& readOnlyFs, int hasSign) {
+		FormatSpecifier fs = readOnlyFs;
 		// sign is only sensible in decimal mode
-		if (mode != 10) { hasSign = 0; }
+		if (fs.mode != 10) { hasSign = 0; }
 		
 		// fix the value, this should be ok for extreme values
-		if (hasSign && mode == 10) {
+		if (hasSign && fs.mode == 10) {
 			x = -static_cast<e_long>(x);
 		}
 		
-		// calc len, log could be used, but I want to avoid it
-		{ e_ulong t=x; while (t) { l++; t /= mode; } if (!x) l++; }
-		
-		if (maxPrecision < l) {
-			maxPrecision = l;
+		int l = IntPrinter::getLen(x, fs.mode);
+		if (fs.maxPrecision < l) {
+			fs.maxPrecision = l;
 		}
-		if (hasSign) { maxPrecision++; }
+		if (hasSign) { fs.maxPrecision++; }
 		
 		if (alignmentPresent && alignment) {
 			// in this case alignment doesn't apply
-			if (alignment < maxPrecision) {
+			if (alignment < fs.maxPrecision) {
 				alignment = 0;
 			}
 		}
 		
-		size_t savedPrecision = maxPrecision;
-		alignment && !alignmentSign && fill(alignment - maxPrecision);
+		alignment && !alignmentSign && fill(alignment - fs.maxPrecision);
 		
 		size_t toWrite = Buf_Size-1 - pos;
-		if (maxPrecision < toWrite) {
-			toWrite = maxPrecision;
+		if (fs.maxPrecision < toWrite) {
+			toWrite = fs.maxPrecision;
 		}
 		
-		// skip thelast digits if there's no place to print them
-		for (; maxPrecision > hasSign && maxPrecision > toWrite; maxPrecision--) {
-			x /= mode;
-		}
+		IntPrinter::print(dataBuf + pos, toWrite, x, fs, hasSign);
 		
-		// first check if there's any sense to do the loop over the digits
-		if (hasSign < toWrite) {
-			// loops continues down to 'hasSign' in order
-			// to leave a space for a '-' if there's such a need
-			if (mode != 16) {
-				for (; maxPrecision > hasSign; maxPrecision--) {
-					dataBuf[pos+maxPrecision-1] = '0' + (x % mode);
-					x /= mode;
-				}
-				
-			} else {
-				for (; maxPrecision > hasSign; maxPrecision--) {
-					int t = (x % mode);
-					if (t>9) {
-						dataBuf[pos+maxPrecision-1] = (hexUpper?'A':'a')+(t-10);
-						
-					} else {
-						dataBuf[pos+maxPrecision-1] = '0' + t;
-					}
-					x /= mode;
-				}
-			}
-		}
-		// add sign (if there's a place for that)
-		if (hasSign && toWrite) { dataBuf[pos+maxPrecision-1] = '-'; }
 		pos += toWrite;
 		
-		alignment && alignmentSign && fill(alignment - savedPrecision);
+		alignment && alignmentSign && fill(alignment - fs.maxPrecision);
 	}
 	
 	template <class T>
