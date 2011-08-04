@@ -53,7 +53,7 @@ namespace {
 	}
 	
 	TEST_F(FormatOne, Test2) {
-		char *p = x.parse(POD::ConstBuffer("xxy {:z}"), 123);
+		char *p = x.parse(POD::ConstBuffer("xxy {:g}"), 123);
 		ASSERT_STREQ(p, "xxy {badspec}");
 		
 		char *q = x.parse(POD::ConstBuffer("xxy {:d }"), 123);
