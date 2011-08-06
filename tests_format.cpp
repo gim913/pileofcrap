@@ -323,6 +323,55 @@ namespace {
 		char *s = x.parse(POD::ConstBuffer("{:o}"), realUshort);
 		ASSERT_STREQ(s, foo);
 	}
+	
+	struct FpTests : public ::testing::Test {
+		FpTests() {}
+	};
+	
+	TEST_F(FpTests, TestRadix) {
+		// todo
+		ASSERT_EQ(1, 0);
+	}
+	
+	// These tests assume binary32/binary64 representation
+	TEST_F(FpTests, TestPrecisionMalcolms) {
+		union { float flt; e_uint bin; } bin32;
+		bin32.flt = 1.f;
+		
+		//0 | 01111111 | 0000000 00000000 00000000
+		ASSERT_EQ(bin32.bin, 0x3f800000);
+		
+		// assume exponent range is 127, and skip it
+		for (size_t i=0; i<126; ++i) bin32.flt /= 2.f;
+		
+		//0 | 00000001 | 0000000 00000000 00000000
+		ASSERT_EQ(bin32.bin, 0x00800000);
+		
+		size_t floatPrecision = 0;
+		while (bin32.flt > 0.f) {
+			bin32.flt /= 2.f;
+			floatPrecision++;
+		}
+		ASSERT_EQ(floatPrecision, 24);
+		
+		union { double dbl; e_ulong bin; } bin64;
+		bin64.dbl = 1.0;
+		
+		// 0 | 01111111111 | 0000000000000000000000000000000000000000000000000000
+		ASSERT_EQ(bin64.bin, 0x3ff0000000000000ull);
+		
+		for (size_t i=0; i<1022; ++i) bin64.dbl /= 2.0;
+		
+		// 0 | 00000000001 | 0000000000000000000000000000000000000000000000000000
+		ASSERT_EQ(bin64.bin, 0x0010000000000000ull);
+		
+		size_t doublePrecision = 0;
+		while (bin64.dbl > 0.f) {
+			bin64.dbl /= 2.f;
+			doublePrecision++;
+		}
+		ASSERT_EQ(doublePrecision, 53);
+	}
 }
 
 int runFormatTests()
