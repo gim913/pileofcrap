@@ -97,7 +97,6 @@ class FormatB {
 					ret.hexUpper = true;
 				case 'x': ret.mode=16; break;
 				
-				// nasty, but seems to work like a charm
 				case 'g':
 					if (defaultMode != 10) {
 						ret.mode = 0;
@@ -136,6 +135,39 @@ class FormatB {
 		if (parseFormat(fs, 0))
 			return;
 		realPrint<BoolPrinter>(static_cast<e_ulong>(x), fs, x < 0 ? 1 : 0);
+	}
+	
+	template <class T>
+	e_ulong ptrToUlong(T* ptr) {
+		// the code below assumes, that sizeof(T*) >= 4
+		if (sizeof(T*) <= sizeof(e_uint)) {
+			return reinterpret_cast<e_uint>(ptr);
+		
+		} else {
+			return reinterpret_cast<e_ulong>(ptr);
+		}
+	}
+	
+	template <class T>
+	void print(T* x) {
+		FormatSpecifier fs;
+		if (parseFormat(fs, 16))
+			return;
+		
+		realPrint<IntPrinter>(ptrToUlong(x), fs, 0);
+	}
+	
+	// overload instead of specialization
+	void print(const char* x) {
+		FormatSpecifier fs;
+		if (parseFormat(fs, 0))
+			return;
+		
+		realPrint<CharPtrPrinter>(ptrToUlong(x), fs, 0);
+	}
+	
+	void print(char* x) {
+		print(const_cast<const char*>(x));
 	}
 	
 	void print(e_byte x)   { print(static_cast<e_ulong>(x), x < 0 ? 1 : 0); }
@@ -255,6 +287,39 @@ class FormatB {
 					
 				} else {
 					static const char strFalse[] = "falseQQQQQ";
+					memcpy(buf, strFalse, bufLen);
+				}
+				
+			} else {
+				IntPrinter::print(buf, bufLen, x, fs, hasSign);
+			}
+		}
+	};
+	
+	struct CharPtrPrinter {
+		static size_t getLen(e_long x, int mode) {
+			if (0 == mode) {
+				return x ? strlen(reinterpret_cast<char*>(x)) : 6;
+		
+			} else {
+				return IntPrinter::getLen(x, mode);
+			}
+		}
+		
+		static void print(char* buf, size_t bufLen, e_ulong x, const FormatSpecifier& fs, int hasSign) {
+			if (0 == fs.mode) {
+				size_t maxPrecision = fs.maxPrecision;
+				size_t strLen = x ? strlen(reinterpret_cast<char*>(x)) : 6;
+				size_t noOfZeroes = maxPrecision - strLen;
+				size_t written = fill(buf, bufLen, noOfZeroes, '_');
+				bufLen -= written;
+				buf += written;
+				// 'Q'-s are currently added for test only purposes
+				if (x) {
+					memcpy(buf, reinterpret_cast<char*>(x), bufLen);
+					
+				} else {
+					static const char strFalse[] = "{null}QQQQQ";
 					memcpy(buf, strFalse, bufLen);
 				}
 				

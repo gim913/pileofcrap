@@ -260,6 +260,69 @@ namespace {
 		char *q = x.parse(POD::ConstBuffer("foo {} bar"), static_cast<e_ubyte>(123));
 		ASSERT_STREQ(q, "foo 123 bar");
 	}
+	
+	
+	static void l_itoa(char *dest, void *ptr, size_t base = 16) {
+		size_t l = 0;
+		e_ulong i = (sizeof(void*) <= sizeof(e_uint)) ? reinterpret_cast<e_uint>(ptr) : reinterpret_cast<e_ulong>(ptr);
+		e_ulong t = i;
+		if (t) { while (t) { t /= base; l++; } }
+		else l++;
+		
+		dest[l] = 0;
+		do {
+			char t = i % base;
+			dest[--l] = t + (t < 10 ? '0' : ('a' - 10));
+			i /= base;
+		} while (i);
+	}
+	
+	TEST_F(FormatTwo, TestCharPtr) {
+		char realHello[] = "Hello, world!";
+		char *hello = realHello;
+
+		char *p = x.parse(POD::ConstBuffer("{}"), hello);
+		ASSERT_STREQ(p, "Hello, world!");
+		
+		hello = 0;
+		char *q = x.parse(POD::ConstBuffer("foo{}bar"), hello);
+		ASSERT_STREQ(q, "foo{null}bar");
+		
+		char *r = x.parse(POD::ConstBuffer("{}"), realHello);
+		ASSERT_STREQ(r, "Hello, world!");
+		
+		char *s = x.parse(POD::ConstBuffer("{:x}"), realHello);
+		char foo[10];
+		l_itoa(foo, realHello);
+		ASSERT_STREQ(s, foo);
+		
+		const char* world = realHello;
+		char *t = x.parse(POD::ConstBuffer("{}"), world);
+		ASSERT_STREQ(t, "Hello, world!");
+		
+	}
+	
+	TEST_F(FormatTwo, TestOthPtr) {
+		e_uint realUint[] = { 8,7,6,5,4,4,40 };
+		e_ushort realUshort[] = { 8,7,6,5,4,4,40 };
+		char foo[20];
+		
+		l_itoa(foo, realUint);
+		char *p = x.parse(POD::ConstBuffer("{:x}"), realUint);
+		ASSERT_STREQ(p, foo);
+		
+		l_itoa(foo, realUshort);
+		char *q = x.parse(POD::ConstBuffer("{:x}"), realUshort);
+		ASSERT_STREQ(q, foo);
+		
+		l_itoa(foo, realUint, 10);
+		char *r = x.parse(POD::ConstBuffer("{:d}"), realUint);
+		ASSERT_STREQ(r, foo);
+		
+		l_itoa(foo, realUshort, 8);
+		char *s = x.parse(POD::ConstBuffer("{:o}"), realUshort);
+		ASSERT_STREQ(s, foo);
+	}
 }
 
 int runFormatTests()
