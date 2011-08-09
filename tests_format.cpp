@@ -387,7 +387,7 @@ namespace {
 		
 		sprintf(buf, "piapprox %10.0f", f);
 		
-		ASSERT_STREQ(p, buf);
+		ASSERT_STREQ(buf, p);
 	}
 }
 

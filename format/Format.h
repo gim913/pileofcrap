@@ -661,15 +661,18 @@ class FormatB {
 					while (suint.aboveZero()) {
 						buf[i++] = '0' + suint.modDiv10();
 					}
-					buf[i--] = 0;
+					buf[i] = 0;
 					
 					size_t j = 0;
+					size_t count = i--;
 					while (j < i) {
 						char t = buf[i];
 						buf[i--] = buf[j];
 						buf[j++] = t;
 					}
-					std::cout << "calced: " << buf << std::endl;
+					
+					memcpy(dataBuf + pos, buf, count);
+					pos += count;
 				} else {
 					std::cout << "BaaaD ";
 				}
