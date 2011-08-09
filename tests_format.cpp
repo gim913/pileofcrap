@@ -381,13 +381,18 @@ namespace {
 	}
 	
 	TEST_F(FpTests, TestPr1) {
-		float f = static_cast<float>(4294967295.0f * 0xfffffff0.fp0 + 10.f);
-		char *p = x.parse(POD::ConstBuffer("piapprox {}"), f);
-		char buf[100];
+		float f = static_cast<float>(4294967295.0f * 0xfffffff0.fp0);
+		e_uint* dwFlt = reinterpret_cast<e_uint*>(&f);
 		
-		sprintf(buf, "piapprox %10.0f", f);
+		for (size_t i = 0; i < (1 << 16); ++i) {
+			char *p = x.parse(POD::ConstBuffer("piapprox {}"), f);
+			char buf[100];
 		
-		ASSERT_STREQ(buf, p);
+			sprintf(buf, "piapprox %10.0f", f);
+			ASSERT_STREQ(buf, p);
+			
+			(*dwFlt) += 64;
+		}
 	}
 }
 

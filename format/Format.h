@@ -652,7 +652,7 @@ class FormatB {
 				
 				} else if (exponent == 64 && exponent) {
 					char buf[100];
-					std::cout << "exp:" << exponent << " " << std::hex << intPart << std::dec << std::endl;
+					//std::cout << "exp:" << exponent << " " << std::hex << intPart << std::dec << std::endl;
 					
 					SimpleUint<256> suint(intPart);
 					suint <<= (exponent - TypePrinter::Precision_1);
@@ -673,6 +673,8 @@ class FormatB {
 					
 					memcpy(dataBuf + pos, buf, count);
 					pos += count;
+					return;
+					
 				} else {
 					std::cout << "BaaaD ";
 				}
