@@ -3,6 +3,8 @@
 
 #include <gtest/gtest.h>
 
+#include <float.h>
+
 namespace {
 	#define STR(x) x, sizeof(x)
 	
@@ -322,10 +324,15 @@ namespace {
 		l_itoa(foo, realUshort, 8);
 		char *s = x.parse(POD::ConstBuffer("{:o}"), realUshort);
 		ASSERT_STREQ(s, foo);
+		
+		const e_ushort* tmpUshort = realUshort;
+		char *t = x.parse(POD::ConstBuffer("{:o}"), tmpUshort);
+		ASSERT_STREQ(t, foo);
 	}
 	
 	struct FpTests : public ::testing::Test {
 		FpTests() {}
+		Format x;
 	};
 	
 	TEST_F(FpTests, TestRadix) {
@@ -371,6 +378,16 @@ namespace {
 			doublePrecision++;
 		}
 		ASSERT_EQ(doublePrecision, 53);
+	}
+	
+	TEST_F(FpTests, TestPr1) {
+		float f = static_cast<float>(4294967295.0f * 0xfffffff0.fp0 + 10.f);
+		char *p = x.parse(POD::ConstBuffer("piapprox {}"), f);
+		char buf[100];
+		
+		sprintf(buf, "piapprox %10.0f", f);
+		
+		ASSERT_STREQ(p, buf);
 	}
 }
 

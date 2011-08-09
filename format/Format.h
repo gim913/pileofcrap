@@ -30,7 +30,6 @@ class FormatB {
 	const Ch* p;
 	const Ch* end;
 	const Ch* last;
-		
 	
 	// those variables will be needed across different funcs
 	int index;
@@ -41,8 +40,19 @@ class FormatB {
 	POD::ConstBuffer currentFormat;
 	bool needsProcessing;
 	
+	float fltPowerz[254+23];
+	
 	public:
-	FormatB() : currentFormat(0, 0) {}
+	FormatB() : currentFormat(0, 0) {
+		union { float flt; e_uint bin; } bin32;
+		bin32.flt = 1.0;
+		for (size_t i = 0; i < 127; ++i) bin32.flt *= 2.f;
+		
+		for (size_t i = 0; i < 254 + 23; ++i) {
+			fltPowerz[i] = bin32.flt;
+			bin32.flt /= 2.f;
+		}
+	}
 	
 	size_t eat(const POD::ConstBuffer& buf) {
 		// space left
@@ -80,7 +90,7 @@ class FormatB {
 		size_t maxPrecision;
 	};
 	
-	int parseFormat(FormatSpecifier& ret, int defaultMode = 10) {
+	int parseIntFormat(FormatSpecifier& ret, int defaultMode = 10) {
 		const char *f = currentFormat.ptr;
 		const char *fEnd = currentFormat.ptr + currentFormat.len;
 		
@@ -120,21 +130,51 @@ class FormatB {
 		}
 		return 0;
 	}
+	
+	int parseFloatFormat(FormatSpecifier& ret) {
+		const char *f = currentFormat.ptr;
+		const char *fEnd = currentFormat.ptr + currentFormat.len;
+		
+		// default mode is decimal
+		ret.mode = 10;
+		ret.hexUpper = false;
+		ret.maxPrecision = 0;
+		if (f && f != fEnd) {
+			switch (*f) {
+				case 'f': case 'F': break;
+				default:
+					eat(POD::ConstBuffer("{badspec}",9));
+					return 1;
+			}
+			f++;
+			if (f != fEnd) {
+				while ((*f) >= '0' && (*f) <= '9') {
+					ret.maxPrecision *= 10;
+					ret.maxPrecision += (*f++) - '0';
+				}
+				if (f != fEnd) {
+					eat(POD::ConstBuffer("{badspec}",9));
+					return 1;
+				}
+			}
+		}
+		return 0;
+	}
 
 	void print(char x)     {
 		//std::cout<< "char   " << std::endl;
 		FormatSpecifier fs;
-		if (parseFormat(fs, 0))
+		if (parseIntFormat(fs, 0))
 			return;
-		realPrint<CharPrinter>(static_cast<e_ulong>(x), fs, x < 0 ? 1 : 0);
+		realIntPrint<CharPrinter>(static_cast<e_ulong>(x), fs, x < 0 ? 1 : 0);
 	}
 	
 	void print(bool x)     {
 		//std::cout<< "bool   " << std::endl;
 		FormatSpecifier fs;
-		if (parseFormat(fs, 0))
+		if (parseIntFormat(fs, 0))
 			return;
-		realPrint<BoolPrinter>(static_cast<e_ulong>(x), fs, x < 0 ? 1 : 0);
+		realIntPrint<BoolPrinter>(static_cast<e_ulong>(x), fs, x < 0 ? 1 : 0);
 	}
 	
 	template <class T>
@@ -151,19 +191,19 @@ class FormatB {
 	template <class T>
 	void print(T* x) {
 		FormatSpecifier fs;
-		if (parseFormat(fs, 16))
+		if (parseIntFormat(fs, 16))
 			return;
 		
-		realPrint<IntPrinter>(ptrToUlong(x), fs, 0);
+		realIntPrint<IntPrinter>(ptrToUlong(x), fs, 0);
 	}
 	
 	// overload instead of specialization
 	void print(const char* x) {
 		FormatSpecifier fs;
-		if (parseFormat(fs, 0))
+		if (parseIntFormat(fs, 0))
 			return;
 		
-		realPrint<CharPtrPrinter>(ptrToUlong(x), fs, 0);
+		realIntPrint<CharPtrPrinter>(ptrToUlong(x), fs, 0);
 	}
 	
 	void print(char* x) {
@@ -181,9 +221,9 @@ class FormatB {
 	
 	void print(e_ulong x, int hasSign = 0) {
 		FormatSpecifier fs;
-		if (parseFormat(fs))
+		if (parseIntFormat(fs))
 			return;
-		realPrint<IntPrinter>(x, fs, hasSign);
+		realIntPrint<IntPrinter>(x, fs, hasSign);
 	}
 	
 	struct IntPrinter {
@@ -330,7 +370,7 @@ class FormatB {
 	};
 	
 	template <class TypePrinter>
-	void realPrint(e_ulong x, const FormatSpecifier& readOnlyFs, int hasSign) {
+	void realIntPrint(e_ulong x, const FormatSpecifier& readOnlyFs, int hasSign) {
 		FormatSpecifier fs = readOnlyFs;
 		// sign is only sensible in decimal mode
 		if (fs.mode != 10) { hasSign = 0; }
@@ -363,6 +403,279 @@ class FormatB {
 		pos += toWrite;
 		
 		alignment && alignmentSign && fill(alignment - fs.maxPrecision);
+	}
+	
+	void print(float x) {
+		FormatSpecifier fs;
+		if (parseFloatFormat(fs))
+			return;
+		
+		realFltPrint<FloatPrinter>(x, fs, x < 0.0f);
+	}
+	
+	struct FloatPrinter {
+		static const size_t Number_Decimal_Digits = 8;
+		static const size_t Size = 32;
+		static const size_t Precision = 24;
+		static const size_t Precision_1 = 23;
+		static const size_t Exponent_Mask = 0xff;
+		
+		
+		// return maximal value
+		static size_t getLen(float x, int mode) {
+			return 66;
+		}
+	};
+
+	// ATM will work only with Bit_Count == 256
+	template <size_t Bit_Count>
+	class SimpleUint {
+	public:
+		typedef SimpleUint<Bit_Count> _Myself;
+		static const size_t Bits_Per_Ulong = (sizeof(e_ulong) * 8);
+		static const size_t Ulong_Count = Bit_Count / Bits_Per_Ulong;
+	private:
+		e_ulong d[Ulong_Count + 1];
+	public:
+		static const size_t Byte_Count = sizeof(d);
+		
+		explicit SimpleUint(e_ulong val) {
+			memset(d, 0, Byte_Count);
+			d[Ulong_Count - 1] = val;
+		}
+		
+		SimpleUint(const _Myself& cp) {
+			memcpy(d, cp.d, Byte_Count);
+		}
+		
+		SimpleUint& operator=(const _Myself& other) {
+			if (this != &other) {
+				memcpy(d, other.d, Byte_Count);
+			}
+		}
+		
+		SimpleUint& operator <<=(int arg) {
+			arg &= (Bit_Count - 1);
+			
+			if (arg < 64) {
+				size_t i = 0;
+				for (; i < Ulong_Count; ++i) {
+					d[i] <<= arg;
+					d[i] |= (d[i+1] >> (Bits_Per_Ulong - arg));
+				}
+				d[Ulong_Count] <<= arg;
+				
+			}
+			return *this;
+		}
+		
+		SimpleUint& operator >>=(int arg) {
+			arg &= (Bit_Count -1);
+			if (arg < 64) {
+				size_t i = Ulong_Count;
+				for (; i > 0; --i) {
+					d[i] >>= arg;
+					d[i] |= (d[i-1] << (Bits_Per_Ulong - arg));
+				}
+				d[0] >>= arg;
+				
+			} else if (arg && (0 == (arg % Bits_Per_Ulong))) {
+				arg /= Bits_Per_Ulong;
+				if (arg <= Ulong_Count) {
+					for (size_t i = Ulong_Count; i >= arg; --i) {
+						d[i] = d[i-arg];
+					}
+					for (size_t i=0; i<arg; ++i) {
+						d[i] = 0;
+					}
+				}
+			}
+		}
+		
+		SimpleUint& operator+=(const _Myself& other) {
+			bool carry = false;
+			for (size_t i = Ulong_Count; i>0; --i) {
+				bool newCarry = false;
+				
+				if (d[i] + other.d[i] < d[i]) newCarry = true;
+				d[i] += other.d[i];
+				
+				if (d[i] + 1 < d[i]) newCarry = true;
+				
+				if (carry)
+					d[i]++;
+				
+				carry = newCarry;
+			}
+			d[0] += other.d[0];
+			d[0] += carry;
+			
+			return *this;
+		}
+		
+		SimpleUint& operator-() {
+			bool isZero = true;
+			for (size_t i = 0; i <= Ulong_Count && isZero; ++i) {
+				if (d[i])
+					isZero = false;
+			}
+			if (!isZero) {
+				for (size_t i = 0; i <= Ulong_Count; ++i) {
+					d[i] ^= -1;
+				}
+				
+				if (d[0] >> 63) {
+					size_t i;
+					for (i = Ulong_Count; i > 0; --i) {
+						if (d[i] + 1 < d[i]) {
+							d[i] = 0;
+							
+						} else {
+							d[i]++;
+							break;
+						}
+					}
+					if (i == 0) {
+						d[0]++;
+					}
+				}
+			}
+			return *this;
+		}
+		
+		void print() {
+			std::cout << std::hex;
+			for (size_t i = 0; i <= Ulong_Count; ++i) {
+				std::cout << d[i] << " ";
+			}
+			std::cout << std::dec << std::endl;
+		}
+		
+		bool aboveZero() {
+			bool nonZero = false;
+			// < and not <= !!!
+			for (size_t i = 0; i < Ulong_Count && !nonZero; ++i) {
+				if (d[i])
+					nonZero = true;
+			}
+			return nonZero;
+		}
+		
+		e_uint modDiv10() {
+			_Myself temp(*this);
+			_Myself orig(*this);
+			
+			temp >>= 1;
+			(*this) += temp;
+			(*this) >>= 1;
+			
+			temp = (*this);
+			temp >>= 4;
+			(*this) += temp;
+			
+			temp = (*this);
+			temp >>= 8;
+			(*this) += temp;
+			
+			temp = (*this);
+			temp >>= 16;
+			(*this) += temp;
+			
+			temp = (*this);
+			temp >>= 32;
+			(*this) += temp;
+			
+			temp = (*this);
+			temp >>= 64;
+			(*this) += temp;
+			
+			temp = (*this);
+			temp >>= 128;
+			(*this) += temp;
+			
+			(*this) >>= 3;
+			
+			temp = (*this);
+			temp.d[Ulong_Count] = 0;
+			_Myself temp2(temp);
+			temp <<= 3;
+			temp2 <<= 1;
+			
+			orig += -temp;
+			orig += -temp2;
+			
+			return orig.d[Ulong_Count - 1] % 10;
+		}
+	};
+	
+	template <class TypePrinter>
+	void realFltPrint(float x, const FormatSpecifier& readOnlyFs, int hasSign) {
+		FormatSpecifier fs = readOnlyFs;
+		union { float flt; e_uint bin; } bin32;
+		
+		bin32.flt = x;
+		
+		// needs special treatment
+		e_int exponent = ((bin32.bin >> TypePrinter::Precision_1) & TypePrinter::Exponent_Mask);
+		if (exponent == TypePrinter::Exponent_Mask) {
+			hasSign = 0;
+			std::cout << ((bin32.bin >> (TypePrinter::Size - 1))?'-':'+');
+			if (bin32.bin & ((1ull << TypePrinter::Precision_1) - 1)) {
+				std::cout << "nan" << std::endl;
+			} else {
+				std::cout << "inf" << std::endl;
+			}
+			
+		} else {
+			if ((bin32.bin >> (TypePrinter::Size - 1))) {
+				hasSign = 1;
+			}
+			// not sure if this is ok :]
+			if (hasSign) {
+				x = -x;
+			}
+			
+			size_t l = TypePrinter::getLen(x, fs.mode);
+			
+			bin32.flt = x;
+			exponent -= 127;
+			e_ulong intPart = bin32.bin;
+			intPart &= ((1ull << TypePrinter::Precision_1) - 1);
+			intPart |= (1ull << TypePrinter::Precision_1);
+			
+			if (exponent >= 0) {
+				if (exponent > TypePrinter::Precision_1 && exponent < 64) {
+					intPart <<= (exponent - TypePrinter::Precision_1);
+					
+				} else if (exponent <= TypePrinter::Precision_1) {
+					intPart >>= (TypePrinter::Precision_1 - exponent);
+				
+				} else if (exponent == 64 && exponent) {
+					char buf[100];
+					std::cout << "exp:" << exponent << " " << std::hex << intPart << std::dec << std::endl;
+					
+					SimpleUint<256> suint(intPart);
+					suint <<= (exponent - TypePrinter::Precision_1);
+					
+					size_t i = 0;
+					while (suint.aboveZero()) {
+						buf[i++] = '0' + suint.modDiv10();
+					}
+					buf[i--] = 0;
+					
+					size_t j = 0;
+					while (j < i) {
+						char t = buf[i];
+						buf[i--] = buf[j];
+						buf[j++] = t;
+					}
+					std::cout << "calced: " << buf << std::endl;
+				} else {
+					std::cout << "BaaaD ";
+				}
+			}
+			std::cout << "exp:" << exponent << " " << intPart << std::endl;
+		}
 	}
 	
 	template <class T>
