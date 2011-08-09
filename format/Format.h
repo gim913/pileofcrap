@@ -666,7 +666,7 @@ class FormatB {
 				} else if (exponent <= TypePrinter::Precision_1) {
 					intPart >>= (TypePrinter::Precision_1 - exponent);
 				
-				} else if (exponent == 64 && exponent) {
+				} else if (exponent >= 64) {
 					char buf[100];
 					//std::cout << "exp:" << exponent << " " << std::hex << intPart << std::dec << std::endl;
 					

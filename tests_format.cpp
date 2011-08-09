@@ -383,16 +383,17 @@ namespace {
 	TEST_F(FpTests, TestPr1) {
 		float f = static_cast<float>(4294967295.0f * 0xfffffff0.fp0);
 		e_uint* dwFlt = reinterpret_cast<e_uint*>(&f);
-	
-		for (size_t i = 0; i < (1 << 16); ++i) {
-			char *p = x.parse(POD::ConstBuffer("piapprox {}"), f);
-			char buf[100];
+		char buf[100];
 		
+		for (size_t i = 0; i < (1 << 14); ++i) {
+			char *p = x.parse(POD::ConstBuffer("piapprox {}"), f);
+			
 			sprintf(buf, "piapprox %10.0f", f);
 			ASSERT_STREQ(buf, p);
 			
-			(*dwFlt) += 64;
+			(*dwFlt) += 17389;
 		}
+		std::cout << "last:" << buf << " " << ((*dwFlt) >> 23) << std::endl;
 	}
 }
 
