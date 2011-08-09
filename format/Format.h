@@ -564,36 +564,49 @@ class FormatB {
 		e_uint modDiv10() {
 			_Myself temp(*this);
 			_Myself orig(*this);
-			
+
+			/*
 			temp >>= 1;
 			(*this) += temp;
 			(*this) >>= 1;
 			
-			temp = (*this);
-			temp >>= 4;
-			(*this) += temp;
+			temp = (*this); temp >>= 4; (*this) += temp;
 			
-			temp = (*this);
-			temp >>= 8;
-			(*this) += temp;
+			temp = (*this); temp >>= 8; (*this) += temp;
 			
-			temp = (*this);
-			temp >>= 16;
-			(*this) += temp;
+			temp = (*this); temp >>= 16; (*this) += temp;
 			
-			temp = (*this);
-			temp >>= 32;
-			(*this) += temp;
+			temp = (*this); temp >>= 32; (*this) += temp;
 			
-			temp = (*this);
-			temp >>= 64;
-			(*this) += temp;
+			temp = (*this); temp >>= 64; (*this) += temp;
 			
-			temp = (*this);
-			temp >>= 128;
-			(*this) += temp;
+			temp = (*this); temp >>= 128; (*this) += temp;
 			
 			(*this) >>= 3;
+			*/
+
+			//   XXXXXXXX XXYYYYYY YYYYZZZZ 00000000 00000000 00000000 00000000 00000000
+			// ========
+			// + ...XXXXX XXXXXYYY YYYYYYYZ ZZZ00000 00000000 00000000 00000000 00000000
+			// - .....XXX XXXXXXXY YYYYYYYY YZZZZ000 00000000 00000000 00000000 00000000
+			// + .......X XXXXXXXX XYYYYYYY YYYZZZZ0 00000000 00000000 00000000 00000000
+			// : : : : :
+			// + ........ ........ ........ ........ ........ ...XXXXX XXXYYYYY YYYZZZZ0
+			// - ........ ........ ........ ........ ........ .....XXX XXXXXYYY YYYYYZZZ
+			// : : : : :
+			// + ........ ........ ........ ........ ........ ........ ........ .......X
+
+			temp >>= 2;
+			(*this) += temp;
+			(*this) >>= 1;
+			
+			for (size_t i=0; i < (256 / 4)-1; ++i) {
+				(*this) += orig; (*this) >>= 3;
+				(*this) += orig; (*this) >>= 1;
+			}
+			
+			(*this) += orig;
+			(*this) >>= 4;
 			
 			temp = (*this);
 			temp.d[Ulong_Count] = 0;
@@ -601,8 +614,11 @@ class FormatB {
 			temp <<= 3;
 			temp2 <<= 1;
 			
+			//std::cout << "temp: "; temp.print();			
+			//std::cout << "orig: "; orig.print();
 			orig += -temp;
 			orig += -temp2;
+			//std::cout << "rslt: "; orig.print();
 			
 			return orig.d[Ulong_Count - 1] % 10;
 		}
@@ -656,6 +672,8 @@ class FormatB {
 					
 					SimpleUint<256> suint(intPart);
 					suint <<= (exponent - TypePrinter::Precision_1);
+					
+					//suint.print();
 					
 					size_t i = 0;
 					while (suint.aboveZero()) {
