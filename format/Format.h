@@ -513,7 +513,7 @@ class FormatB {
 			return *this;
 		}
 		
-		SimpleUint& operator-() {
+		void negate() {
 			bool isZero = true;
 			for (size_t i = 0; i <= Ulong_Count && isZero; ++i) {
 				if (d[i])
@@ -540,7 +540,6 @@ class FormatB {
 					}
 				}
 			}
-			return *this;
 		}
 		
 		void print() {
@@ -583,7 +582,7 @@ class FormatB {
 			temp = (*this); temp >>= 128; (*this) += temp;
 			
 			(*this) >>= 3;
-			*/
+			/*/
 
 			//   XXXXXXXX XXYYYYYY YYYYZZZZ 00000000 00000000 00000000 00000000 00000000
 			// ========
@@ -607,17 +606,20 @@ class FormatB {
 			
 			(*this) += orig;
 			(*this) >>= 4;
+			// */
 			
 			temp = (*this);
 			temp.d[Ulong_Count] = 0;
 			_Myself temp2(temp);
 			temp <<= 3;
 			temp2 <<= 1;
+			temp.negate();
+			temp2.negate();
 			
 			//std::cout << "temp: "; temp.print();			
 			//std::cout << "orig: "; orig.print();
-			orig += -temp;
-			orig += -temp2;
+			orig += temp;
+			orig += temp2;
 			//std::cout << "rslt: "; orig.print();
 			
 			return orig.d[Ulong_Count - 1] % 10;
