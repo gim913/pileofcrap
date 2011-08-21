@@ -457,21 +457,54 @@ class FormatB {
 		SimpleUint& operator <<=(int arg) {
 			arg &= (Bit_Count - 1);
 			
-			if (arg < 64) {
+			if (arg >= Bit_Count) {
+				memset(d, 0, sizeof(d));
+				return *this;
+			}
+			
+			int moveCount = arg / Bits_Per_Ulong;
+			if (moveCount) {
+				size_t i = 0;
+				for (; i < Ulong_Count - moveCount; ++i) {
+					d[i] = d[i + moveCount];
+				}
+				for (; i < Ulong_Count; ++i) {
+					d[i] = 0;
+				}
+				arg -= moveCount*Bits_Per_Ulong;
+			}
+			
+			if (arg && arg < Bits_Per_Ulong) {
 				size_t i = 0;
 				for (; i < Ulong_Count; ++i) {
 					d[i] <<= arg;
 					d[i] |= (d[i+1] >> (Bits_Per_Ulong - arg));
 				}
 				d[Ulong_Count] <<= arg;
-				
 			}
 			return *this;
 		}
 		
 		SimpleUint& operator >>=(int arg) {
 			arg &= (Bit_Count -1);
-			if (arg < 64) {
+			
+			if (arg >= Bit_Count) {
+				memset(d, 0, sizeof(d));
+				return *this;
+			}
+			
+			int moveCount = arg / Bits_Per_Ulong;
+			if (moveCount) {
+				size_t i = Ulong_Count;
+				for (; i >= moveCount; --i) {
+					d[i] = d[i - moveCount];
+				}
+				for (; i >= 0; --i) {
+					d[i] = 0;
+				}
+				arg -= moveCount*Bits_Per_Ulong;
+			}
+			if (arg && arg < Bits_Per_Ulong) {
 				size_t i = Ulong_Count;
 				for (; i > 0; --i) {
 					d[i] >>= arg;
@@ -479,17 +512,8 @@ class FormatB {
 				}
 				d[0] >>= arg;
 				
-			} else if (arg && (0 == (arg % Bits_Per_Ulong))) {
-				arg /= Bits_Per_Ulong;
-				if (arg <= Ulong_Count) {
-					for (size_t i = Ulong_Count; i >= arg; --i) {
-						d[i] = d[i-arg];
-					}
-					for (size_t i=0; i<arg; ++i) {
-						d[i] = 0;
-					}
-				}
 			}
+			return *this;
 		}
 		
 		SimpleUint& operator+=(const _Myself& other) {
@@ -671,10 +695,10 @@ class FormatB {
 				} else if (exponent >= 64) {
 					char buf[100];
 					//std::cout << "exp:" << exponent << " " << std::hex << intPart << std::dec << std::endl;
+					//std::cout << "real exp: " << (exponent - TypePrinter::Precision_1) << std::endl;
 					
 					SimpleUint<256> suint(intPart);
 					suint <<= (exponent - TypePrinter::Precision_1);
-					
 					//suint.print();
 					
 					size_t i = 0;

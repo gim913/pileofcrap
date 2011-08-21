@@ -385,15 +385,15 @@ namespace {
 		e_uint* dwFlt = reinterpret_cast<e_uint*>(&f);
 		char buf[100];
 		
-		for (size_t i = 0; i < (1 << 14); ++i) {
+		for (size_t i = 0; i < (1 << 9); ++i) {
 			char *p = x.parse(POD::ConstBuffer("piapprox {}"), f);
 			
 			sprintf(buf, "piapprox %10.0f", f);
 			ASSERT_STREQ(buf, p);
 			
-			(*dwFlt) += 17389;
+			(*dwFlt) += 1050611;
 		}
-		std::cout << "last:" << buf << " " << ((*dwFlt) >> 23) << std::endl;
+		std::cout << "last:" << buf << " " << ((*dwFlt) >> 23) << " " << std::endl;
 	}
 }
 
