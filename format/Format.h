@@ -464,7 +464,7 @@ class FormatB {
 			
 			int moveCount = arg / Bits_Per_Ulong;
 			if (moveCount) {
-				size_t i = 0;
+				int i = 0;
 				for (; i < Ulong_Count - moveCount; ++i) {
 					d[i] = d[i + moveCount];
 				}
@@ -475,7 +475,7 @@ class FormatB {
 			}
 			
 			if (arg && arg < Bits_Per_Ulong) {
-				size_t i = 0;
+				int i = 0;
 				for (; i < Ulong_Count; ++i) {
 					d[i] <<= arg;
 					d[i] |= (d[i+1] >> (Bits_Per_Ulong - arg));
@@ -495,7 +495,7 @@ class FormatB {
 			
 			int moveCount = arg / Bits_Per_Ulong;
 			if (moveCount) {
-				size_t i = Ulong_Count;
+				int i = Ulong_Count;
 				for (; i >= moveCount; --i) {
 					d[i] = d[i - moveCount];
 				}
@@ -505,7 +505,7 @@ class FormatB {
 				arg -= moveCount*Bits_Per_Ulong;
 			}
 			if (arg && arg < Bits_Per_Ulong) {
-				size_t i = Ulong_Count;
+				int i = Ulong_Count;
 				for (; i > 0; --i) {
 					d[i] >>= arg;
 					d[i] |= (d[i-1] << (Bits_Per_Ulong - arg));
