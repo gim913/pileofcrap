@@ -686,14 +686,28 @@ class FormatB {
 			intPart |= (1ull << TypePrinter::Precision_1);
 			
 			if (exponent >= 0) {
+				char buf[100];
+				size_t i = 0;
+				
 				if (exponent > TypePrinter::Precision_1 && exponent < 64) {
 					intPart <<= (exponent - TypePrinter::Precision_1);
 					
+					while (intPart) {
+						buf[i++] = '0' + (intPart % 10);
+						intPart /= 10;
+					}
+					buf[i] = 0;
+					
 				} else if (exponent <= TypePrinter::Precision_1) {
 					intPart >>= (TypePrinter::Precision_1 - exponent);
+					
+					while (intPart) {
+						buf[i++] = '0' + (intPart % 10);
+						intPart /= 10;
+					}
+					buf[i] = 0;
 				
 				} else if (exponent >= 64) {
-					char buf[100];
 					//std::cout << "exp:" << exponent << " " << std::hex << intPart << std::dec << std::endl;
 					//std::cout << "real exp: " << (exponent - TypePrinter::Precision_1) << std::endl;
 					
@@ -701,27 +715,29 @@ class FormatB {
 					suint <<= (exponent - TypePrinter::Precision_1);
 					//suint.print();
 					
-					size_t i = 0;
 					while (suint.aboveZero()) {
 						buf[i++] = '0' + suint.modDiv10();
 					}
 					buf[i] = 0;
 					
+				} else {
+					std::cout << "BaaaD ";
+				}
+				
+				size_t count = 0;
+				if (i) {
 					size_t j = 0;
-					size_t count = i--;
+					count = i--;
 					while (j < i) {
 						char t = buf[i];
 						buf[i--] = buf[j];
 						buf[j++] = t;
 					}
-					
-					memcpy(dataBuf + pos, buf, count);
-					pos += count;
-					return;
-					
-				} else {
-					std::cout << "BaaaD ";
 				}
+				
+				memcpy(dataBuf + pos, buf, count);
+				pos += count;
+				return;
 			}
 			std::cout << "exp:" << exponent << " " << intPart << std::endl;
 		}

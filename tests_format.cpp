@@ -386,13 +386,28 @@ namespace {
 		char buf[100];
 		
 		for (size_t i = 0; i < (1 << 9); ++i) {
-			char *p = x.parse(POD::ConstBuffer("piapprox {}"), f);
+			char *p = x.parse(POD::ConstBuffer("curr {}"), f);
 			
-			sprintf(buf, "piapprox %10.0f", f);
+			sprintf(buf, "curr %10.0f", f);
 			ASSERT_STREQ(buf, p);
 			
 			(*dwFlt) += 1050611;
 		}
+		std::cout << "last:" << buf << " " << ((*dwFlt) >> 23) << " " << std::endl;
+	}
+	TEST_F(FpTests, TestPr2) {
+		float f = 1.f;
+		char buf[100];
+		
+		for (size_t i = 0; i < 128; ++i) {
+			char *p = x.parse(POD::ConstBuffer("pow {}"), f);
+			
+			sprintf(buf, "pow %.0f", f);
+			ASSERT_STREQ(buf, p);
+			
+			f *= 2;
+		}
+		e_uint* dwFlt = reinterpret_cast<e_uint*>(&f);
 		std::cout << "last:" << buf << " " << ((*dwFlt) >> 23) << " " << std::endl;
 	}
 }
