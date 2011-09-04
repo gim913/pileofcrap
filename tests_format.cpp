@@ -379,7 +379,6 @@ namespace {
 		}
 		ASSERT_EQ(doublePrecision, 53);
 	}
-	
 	TEST_F(FpTests, TestPr1) {
 		float f = static_cast<float>(4294967295.0f * 0xfffffff0.fp0);
 		e_uint* dwFlt = reinterpret_cast<e_uint*>(&f);
@@ -410,6 +409,64 @@ namespace {
 		e_uint* dwFlt = reinterpret_cast<e_uint*>(&f);
 		std::cout << "last:" << buf << " " << ((*dwFlt) >> 23) << " " << std::endl;
 	}
+	TEST_F(FpTests, TestPrDifferent) {
+		float f;
+		e_uint* dwFlt = reinterpret_cast<e_uint*>(&f);
+		char buf[256], *p;
+		
+		(*dwFlt) = 0x3f000000;
+		p = x.parse(POD::ConstBuffer("f {:f10}"), f);
+		snprintf(buf, sizeof(buf), "f %.0f", f);
+		ASSERT_STREQ(buf, p);
+		
+		(*dwFlt) = 0x3f800000;
+		p = x.parse(POD::ConstBuffer("f {:f10}"), f);
+		snprintf(buf, sizeof(buf), "f %.0f", f);
+		ASSERT_STREQ(buf, p);
+		
+		(*dwFlt) = 0x40000000;
+		p = x.parse(POD::ConstBuffer("f {:f10}"), f);
+		snprintf(buf, sizeof(buf), "f %.0f", f);
+		ASSERT_STREQ(buf, p);
+		
+		(*dwFlt) = 0x4b000000;
+		p = x.parse(POD::ConstBuffer("f {:f10}"), f);
+		snprintf(buf, sizeof(buf), "f %.0f", f);
+		ASSERT_STREQ(buf, p);
+		
+		(*dwFlt) = 0x4b800000;
+		p = x.parse(POD::ConstBuffer("f {:f10}"), f);
+		snprintf(buf, sizeof(buf), "f %.0f", f);
+		ASSERT_STREQ(buf, p);
+		
+		(*dwFlt) = 0x5f000000;
+		p = x.parse(POD::ConstBuffer("f {:f10}"), f);
+		snprintf(buf, sizeof(buf), "f %.0f", f);
+		ASSERT_STREQ(buf, p);
+		
+		(*dwFlt) = 0x5f800000;
+		p = x.parse(POD::ConstBuffer("f {:f10}"), f);
+		snprintf(buf, sizeof(buf), "f %.0f", f);
+		ASSERT_STREQ(buf, p);
+	}
+	/*
+	TEST_F(FpTests, TestPr3) {
+		float f;
+		e_uint* dwFlt = reinterpret_cast<e_uint*>(&f);
+		char buf[256];
+		
+		(*dwFlt) = 0x3f800001;
+		for (size_t i = 0; i < 1; ++i) {
+			char *p = x.parse(POD::ConstBuffer("pow {:f10}"), f);
+			
+			snprintf(buf, sizeof(buf), "pow %.170f", f);
+			ASSERT_STREQ(buf, p);
+			
+			(*dwFlt) /= 2;
+		}
+		std::cout << "last:" << buf << " " << ((*dwFlt) >> 23) << " " << std::endl;
+	}
+	 */
 }
 
 int runFormatTests()

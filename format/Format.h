@@ -569,6 +569,8 @@ class FormatB {
 		void print() {
 			std::cout << std::hex;
 			for (size_t i = 0; i <= Ulong_Count; ++i) {
+				std::cout.fill('.');
+				std::cout.width(8);
 				std::cout << d[i] << " ";
 			}
 			std::cout << std::dec << std::endl;
@@ -684,62 +686,65 @@ class FormatB {
 			e_ulong intPart = bin32.bin;
 			intPart &= ((1ull << TypePrinter::Precision_1) - 1);
 			intPart |= (1ull << TypePrinter::Precision_1);
+			e_ulong decPart = intPart;
 			
-			if (exponent >= 0) {
-				char buf[100];
-				size_t i = 0;
+			char buf[100];
+			size_t i = 0;
+			
+			//std::cout << "exp:" << std::dec << exponent << " " << std::hex << intPart << std::endl;
+			//std::cout << "real exp: " << std::dec << (int)(exponent - TypePrinter::Precision_1) << std::endl;
+			if (exponent < 0) {
+				//std::cout << " case 0) " << std::hex << intPart << std::endl;
+				buf[i++] = '0';
+				buf[i] = 0;
 				
-				if (exponent > TypePrinter::Precision_1 && exponent < 64) {
-					intPart <<= (exponent - TypePrinter::Precision_1);
-					
-					while (intPart) {
-						buf[i++] = '0' + (intPart % 10);
-						intPart /= 10;
-					}
-					buf[i] = 0;
-					
-				} else if (exponent <= TypePrinter::Precision_1) {
-					intPart >>= (TypePrinter::Precision_1 - exponent);
-					
-					while (intPart) {
-						buf[i++] = '0' + (intPart % 10);
-						intPart /= 10;
-					}
-					buf[i] = 0;
+			} else if (exponent <= TypePrinter::Precision_1) {
+				intPart >>= (TypePrinter::Precision_1 - exponent);
+				//std::cout << " case 1) " << std::hex << intPart << " | " << decPart << std::endl;
 				
-				} else if (exponent >= 64) {
-					//std::cout << "exp:" << exponent << " " << std::hex << intPart << std::dec << std::endl;
-					//std::cout << "real exp: " << (exponent - TypePrinter::Precision_1) << std::endl;
-					
-					SimpleUint<256> suint(intPart);
-					suint <<= (exponent - TypePrinter::Precision_1);
-					//suint.print();
-					
-					while (suint.aboveZero()) {
-						buf[i++] = '0' + suint.modDiv10();
-					}
-					buf[i] = 0;
-					
-				} else {
-					std::cout << "BaaaD ";
+				while (intPart) {
+					buf[i++] = '0' + (intPart % 10);
+					intPart /= 10;
 				}
+				buf[i] = 0;
 				
-				size_t count = 0;
-				if (i) {
-					size_t j = 0;
-					count = i--;
-					while (j < i) {
-						char t = buf[i];
-						buf[i--] = buf[j];
-						buf[j++] = t;
-					}
+			} else if (exponent > TypePrinter::Precision_1 && exponent < 64) {
+				intPart <<= (exponent - TypePrinter::Precision_1);
+				//std::cout << " case 2) " << std::hex << intPart << std::endl;
+					
+				while (intPart) {
+					buf[i++] = '0' + (intPart % 10);
+					intPart /= 10;
 				}
+				buf[i] = 0;
 				
-				memcpy(dataBuf + pos, buf, count);
-				pos += count;
-				return;
+			} else if (exponent >= 64) {
+				SimpleUint<256> suint(intPart);
+				suint <<= (exponent - TypePrinter::Precision_1);
+				//std::cout << " case 3) ";
+				//suint.print();
+				
+				while (suint.aboveZero()) {
+					buf[i++] = '0' + suint.modDiv10();
+				}
+				buf[i] = 0;
 			}
-			std::cout << "exp:" << exponent << " " << intPart << std::endl;
+			
+			
+			size_t count = 0;
+			if (i) {
+				size_t j = 0;
+				count = i--;
+				while (j < i) {
+					char t = buf[i];
+					buf[i--] = buf[j];
+					buf[j++] = t;
+				}
+			}
+			
+			memcpy(dataBuf + pos, buf, count);
+			pos += count;
+			return;
 		}
 	}
 	
