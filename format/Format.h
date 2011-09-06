@@ -689,10 +689,43 @@ class FormatB {
 			e_ulong decPart = intPart;
 			
 			char buf[100];
-			size_t i = 0;
+			char dec[256];
+			size_t i = 0, dec_i = 0;
 			
-			//std::cout << "exp:" << std::dec << exponent << " " << std::hex << intPart << std::endl;
+			//std::cout << "exp:" << std::dec << exponent << " vs" << (60 - TypePrinter::Precision_1) << " " << std::hex << intPart << std::endl;
 			//std::cout << "real exp: " << std::dec << (int)(exponent - TypePrinter::Precision_1) << std::endl;
+			
+			// 3 bits would be enough but to make calculations bit simpler (pun intended ;p) I'll take 4
+			if (exponent < (int)TypePrinter::Precision_1 && exponent >= -(int)(60 - TypePrinter::Precision_1)) {
+				decPart <<= (64 - 4 - (TypePrinter::Precision_1 - exponent));
+				decPart &= 0x0FFFFFFFFFFFFFFFULL;
+				
+				//std::cout.width(16);
+				//std::cout.fill('o');
+				//std::cout << std::hex << decPart << std::endl;
+				
+				while (decPart) {
+					// mul 10
+					decPart = (decPart << 3) + (decPart << 1);
+					dec[dec_i++] = '0' + (decPart >> 60);
+					// clear upper 4 bits
+					decPart &= 0x0FFFFFFFFFFFFFFFULL;
+				}
+			}
+			if (fs.maxPrecision > dec_i) {
+				for (; i < fs.maxPrecision - dec_i; ++i) {
+					buf[i] = '0';
+				}
+			}
+			if (dec_i) {
+				do {
+					buf[i++] = dec[--dec_i];
+				} while (dec_i);
+			}
+			if (fs.maxPrecision) {
+				buf[i++] = '.';
+			}
+			
 			if (exponent < 0) {
 				//std::cout << " case 0) " << std::hex << intPart << std::endl;
 				buf[i++] = '0';
