@@ -4,3 +4,6 @@ gtest
 Debug
 Release
 *~
+*.suo
+*.sdf
+*.opensdf
