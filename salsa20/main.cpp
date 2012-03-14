@@ -271,7 +271,7 @@ void testSalsa(int& testNo) {
 	};
 	for (int j=0; j<1000000; ++j) {
 		Salsa20::salsa20(salsaInput4, salsaOutput);
-		memcpy(salsaOutput, salsaInput4, sizeof(salsaInput4));
+		memcpy(salsaInput4, salsaOutput, sizeof(salsaInput4));
 	}
 	static const uint8_t correct4[64] = {
 		8, 18, 38,199,119, 76,215, 67,173,127,144,162,103,212,176,217,
@@ -280,7 +280,7 @@ void testSalsa(int& testNo) {
 		122,127,195,185,185,204,188, 90,245, 9,183,248,226, 85,245,104
 	};
 	for (int i = 0; i < 64; ++i) {
-		if (salsaOutput[i] != correct3[i]) {
+		if (salsaOutput[i] != correct4[i]) {
 			check(testNo, false);
 		}
 	}
