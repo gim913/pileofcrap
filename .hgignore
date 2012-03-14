@@ -7,3 +7,4 @@ Release
 *.suo
 *.sdf
 *.opensdf
+salsa20/Debug
