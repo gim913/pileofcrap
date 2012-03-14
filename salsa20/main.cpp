@@ -137,6 +137,35 @@ struct Salsa20
 		salsa20prg(tempIn, salsaExpOutput);
 #undef LENDIAN
 	}
+
+	// for encryption in-place make encoded == message
+	static void salsa20(uint8_t *message, size_t messageLen, uint8_t* encoded, uint8_t nonce[8], uint8_t key[32]) {
+		uint64_t i;
+		uint8_t v[16];
+		memcpy(v, nonce, 8);
+		
+		for (size_t cnt=0; cnt < messageLen / 64; ++cnt) {
+			uint8_t currentKey[64];
+			*(uint64_t*)(v+8) = i;
+			salsa20exp2(key, key+16, v, currentKey);
+
+			for (int j=0; j<64; ++j) {
+				encoded[j] = message[j] ^ currentKey[j];
+			}
+			++i;
+		}
+
+		if (messageLen % 64) {
+			uint8_t currentKey[64];
+			*(uint64_t*)(v+8) = i;
+			salsa20exp2(key, key+16, v, currentKey);
+
+			int limit = (int)(messageLen % 64);
+			for (int j=0; j<limit; ++j) {
+				encoded[j] = message[j] ^ currentKey[j];
+			}
+		}
+	}
 };
 
 void check(int num, bool isSuccess) {
