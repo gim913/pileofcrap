@@ -86,6 +86,28 @@ struct Salsa20
 			sOut[i] = rIn[i] + sIn[i];
 		}
 	}
+
+	static void salsa20exp2(uint8_t k0[16], uint8_t k1[16], uint8_t n[16], uint8_t (&salsaExpOutput)[64]) {
+#define LENDIAN(a,b,c,d) (((d)<<24)|((c)<<16)|((b)<<8)|(a))
+		static const uint32_t t0 = LENDIAN(101, 120, 112, 97);
+		static const uint32_t t1 = LENDIAN(110, 100,  32, 51);
+		static const uint32_t t2 = LENDIAN( 50,  45,  98, 121);
+		static const uint32_t t3 = LENDIAN(116, 101,  32, 107);
+
+		uint8_t tempIn[64];
+		uint32_t *tempIn32 = (uint32_t*)tempIn;
+		
+		tempIn32[0] = t0;
+		memcpy(tempIn + 4*1, k0, 16);
+		tempIn32[5] = t1;
+		memcpy(tempIn + 4*2 + 16, n, 16);
+		tempIn32[10] = t2;
+		memcpy(tempIn + 4*3 + 32, k1, 16);
+		tempIn32[15] = t3;
+
+		salsa20(tempIn, salsaExpOutput);
+#undef LENDIAN
+	}
 };
 
 void check(int num, bool isSuccess) {
@@ -286,6 +308,27 @@ void testSalsa(int& testNo) {
 	}
 	check(testNo++, true);
 }
+
+void testSalsaExp2(int& testNo) {
+	uint8_t k0[16] = { 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16 };
+	uint8_t k1[16] = { 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216 };
+	uint8_t n[16]  = { 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116 };
+	uint8_t salsaExp2Output[64];
+
+	Salsa20::salsa20exp2(k0, k1, n, salsaExp2Output);
+	static const uint8_t correct[64] = {
+		69, 37, 68, 39, 41, 15,107,193,255,139,122, 6,170,233,217, 98,
+		89,144,182,106, 21, 51,200, 65,239, 49,222, 34,215,114, 40,126,
+		104,197, 7,225,197,153, 31, 2,102, 78, 76,176, 84,245,246,184,
+		177,160,133,130, 6, 72,149,119,192,195,132,236,234,103,246, 74
+	};
+	for (int i = 0; i < 64; ++i) {
+		if (salsaExp2Output[i] != correct[i]) {
+			check(testNo, false);
+		}
+	}
+	check(testNo++, true);
+}
 int main()
 {
 	int testNumber = 0;
@@ -294,5 +337,7 @@ int main()
 	testCr(testNumber);
 	testDr(testNumber);
 	testSalsa(testNumber);
+
+	testSalsaExp2(testNumber);
 	return 0;
 }
