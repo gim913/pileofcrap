@@ -140,21 +140,21 @@ struct Salsa20
 
 	// for encryption in-place make encoded == message
 	static void salsa20(uint8_t *message, size_t messageLen, uint8_t* encoded, uint8_t nonce[8], uint8_t key[32]) {
-		uint64_t i;
+		uint64_t i = 0;
 		uint8_t v[16];
 		memcpy(v, nonce, 8);
 		
-		for (size_t cnt=0; cnt < messageLen / 64; ++cnt) {
+		size_t cnt;
+		for (cnt=0; cnt < messageLen / 64; ++cnt) {
 			uint8_t currentKey[64];
 			*(uint64_t*)(v+8) = i;
 			salsa20exp2(key, key+16, v, currentKey);
 
 			for (int j=0; j<64; ++j) {
-				encoded[j] = message[j] ^ currentKey[j];
+				encoded[cnt*64 + j] = message[cnt*64 + j] ^ currentKey[j];
 			}
 			++i;
 		}
-
 		if (messageLen % 64) {
 			uint8_t currentKey[64];
 			*(uint64_t*)(v+8) = i;
@@ -162,7 +162,7 @@ struct Salsa20
 
 			int limit = (int)(messageLen % 64);
 			for (int j=0; j<limit; ++j) {
-				encoded[j] = message[j] ^ currentKey[j];
+				encoded[cnt*64 + j] = message[cnt*64 + j] ^ currentKey[j];
 			}
 		}
 	}
@@ -405,6 +405,34 @@ void testSalsaExp2(int& testNo) {
 		check(testNo++, true);
 	}
 }
+
+void testSalsaEncryption(int& testNo)
+{
+	char message[] = "What if a cyber brain could generate it's own ghost, create a soul all by itself?\n"
+		"And if it did, just what would be the importance of being human then?\n";
+	uint8_t encoded[sizeof(message)];
+	uint8_t decoded[sizeof(message)];
+
+	uint8_t nonce[8] = {1,2,3,4,5,6,7,8};
+	uint8_t key[32] = {
+		0xed, 0x12, 0x9e, 0x12, 0xd8, 0xc1, 0x3f, 0xae,
+		0x7e, 0xa4, 0x76, 0x32, 0x51, 0xc7, 0xb2, 0x1b,
+		0xf1, 0xbf, 0xeb, 0xfa, 0xfa, 0x01, 0x6f, 0x62,
+		0x36, 0x1, 0xbc, 0xd0, 0x32, 0x83, 0xe2, 0xa5
+	};
+
+	Salsa20::salsa20((uint8_t*)message, sizeof(message), encoded, nonce, key);
+	Salsa20::salsa20(encoded, sizeof(message), decoded, nonce, key);
+
+	for (size_t i=0; i<sizeof(message); ++i) {
+		if (decoded[i] != message[i]) {
+			check(testNo, false);
+		}
+	}
+	::printf("%s", decoded);
+	check(testNo++, true);
+}
+
 int main()
 {
 	int testNumber = 0;
@@ -415,5 +443,7 @@ int main()
 	testSalsaPrg(testNumber);
 
 	testSalsaExp2(testNumber);
+
+	testSalsaEncryption(testNumber);
 	return 0;
 }
