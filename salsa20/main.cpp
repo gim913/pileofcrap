@@ -1,3 +1,8 @@
+/* The following implementation and tests, are only for educational
+ * purposes, and shouldn't be used in software
+ *
+ * Mar. 2012, Michal 'GiM' Spadlinski
+ */
 #include <cstdio>
 #include <cstdint>
 #include <cstdlib>
@@ -71,7 +76,7 @@ struct Salsa20
 		rowRound(temp, z);
 	}
 
-	static void salsa20(uint8_t salsaInput[64], uint8_t (&salsaOutput)[64], int rounds = 10) {
+	static void salsa20prg(uint8_t salsaInput[64], uint8_t (&salsaOutput)[64], int rounds = 10) {
 		uint32_t *sIn = (uint32_t*)salsaInput;
 		uint32_t *sOut = (uint32_t*)&salsaOutput;
 		uint32_t rIn[16], rOut[16];
@@ -89,6 +94,7 @@ struct Salsa20
 
 	static void salsa20exp2(uint8_t k0[16], uint8_t k1[16], uint8_t n[16], uint8_t (&salsaExpOutput)[64]) {
 #define LENDIAN(a,b,c,d) (((d)<<24)|((c)<<16)|((b)<<8)|(a))
+		// from spec: "expand 32-byte k"
 		static const uint32_t t0 = LENDIAN(101, 120, 112, 97);
 		static const uint32_t t1 = LENDIAN(110, 100,  32, 51);
 		static const uint32_t t2 = LENDIAN( 50,  45,  98, 121);
@@ -105,12 +111,13 @@ struct Salsa20
 		memcpy(tempIn + 4*3 + 32, k1, 16);
 		tempIn32[15] = t3;
 
-		salsa20(tempIn, salsaExpOutput);
+		salsa20prg(tempIn, salsaExpOutput);
 #undef LENDIAN
 	}
 
 	static void salsa20exp1(uint8_t k[16], uint8_t n[16], uint8_t (&salsaExpOutput)[64]) {
 #define LENDIAN(a,b,c,d) (((d)<<24)|((c)<<16)|((b)<<8)|(a))
+		// from spec: "expand 16-byte k"
 		static const uint32_t t0 = LENDIAN(101, 120, 112, 97);
 		static const uint32_t t1 = LENDIAN(110, 100,  32, 49);
 		static const uint32_t t2 = LENDIAN( 54,  45,  98, 121);
@@ -127,7 +134,7 @@ struct Salsa20
 		memcpy(tempIn + 4*3 + 32, k, 16);
 		tempIn32[15] = t3;
 
-		salsa20(tempIn, salsaExpOutput);
+		salsa20prg(tempIn, salsaExpOutput);
 #undef LENDIAN
 	}
 };
@@ -248,7 +255,7 @@ void testDr(int& testNo) {
 	check(testNo++, true);
 } 
 
-void testSalsa(int& testNo) {
+void testSalsaPrg(int& testNo) {
 	uint8_t salsaInput1[64] = {
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -257,7 +264,7 @@ void testSalsa(int& testNo) {
 	};
 	uint8_t salsaOutput[64];
 
-	Salsa20::salsa20(salsaInput1, salsaOutput);
+	Salsa20::salsa20prg(salsaInput1, salsaOutput);
 
 	for (int i = 0; i < 64; ++i) {
 		if (salsaOutput[i] != salsaInput1[i]) {
@@ -272,7 +279,7 @@ void testSalsa(int& testNo) {
 		31,240, 32, 63, 15, 83, 93,161,116,147, 48,113,238, 55,204, 36,
 		79,201,235, 79, 3, 81,156, 47,203, 26,244,243, 88,118,104, 54
 	};	
-	Salsa20::salsa20(salsaInput2, salsaOutput);
+	Salsa20::salsa20prg(salsaInput2, salsaOutput);
 	static const uint8_t correct2[64] = {
 		109, 42,178,168,156,240,248,238,168,196,190,203, 26,110,170,154,
 		29, 29,150, 26,150, 30,235,249,190,163,251, 48, 69,144, 51, 57,
@@ -293,7 +300,7 @@ void testSalsa(int& testNo) {
 		86, 16,179,207, 49,237,179, 48, 1,106,178,219,175,199,166, 48,
 		238, 55,204, 36, 31,240, 32, 63, 15, 83, 93,161,116,147, 48,113
 	};
-	Salsa20::salsa20(salsaInput3, salsaOutput);
+	Salsa20::salsa20prg(salsaInput3, salsaOutput);
 	static const uint8_t correct3[64] = {
 		179, 19, 48,202,219,236,232,135,111,155,110, 18, 24,232, 95,158,
 		26,110,170,154,109, 42,178,168,156,240,248,238,168,196,190,203,
@@ -314,7 +321,7 @@ void testSalsa(int& testNo) {
 		94, 94, 99, 52, 90,117, 91,220,146,190,239,143,196,176,130,186
 	};
 	for (int j=0; j<1000000; ++j) {
-		Salsa20::salsa20(salsaInput4, salsaOutput);
+		Salsa20::salsa20prg(salsaInput4, salsaOutput);
 		memcpy(salsaInput4, salsaOutput, sizeof(salsaInput4));
 	}
 	static const uint8_t correct4[64] = {
@@ -376,7 +383,7 @@ int main()
 	testRr(testNumber);
 	testCr(testNumber);
 	testDr(testNumber);
-	testSalsa(testNumber);
+	testSalsaPrg(testNumber);
 
 	testSalsaExp2(testNumber);
 	return 0;
